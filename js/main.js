@@ -35,6 +35,54 @@
     }
   }));
 
+  // ----- "In the news" story cards -----
+  const news = document.querySelector('.news');
+  if (news) {
+    const track = news.querySelector('.news-track');
+    const cards = [...track.querySelectorAll('.news-card')];
+    const prev = news.querySelector('.news-prev');
+    const next = news.querySelector('.news-next');
+    const count = news.querySelector('.news-count');
+    const dots = cards.map(() => news.querySelector('.news-dots').appendChild(document.createElement('span')));
+    let current = -1;
+    const setCurrent = (i) => {
+      if (i === current) return;
+      current = i;
+      count.textContent = `${i + 1} / ${cards.length}`;
+      prev.disabled = i === 0;
+      next.disabled = i === cards.length - 1;
+      dots.forEach((d, k) => d.classList.toggle('on', k === i));
+    };
+    // Ignore intermediate positions while an arrow-triggered scroll animates.
+    let settling = false;
+    let settleTimer;
+    const settle = () => { settling = false; clearTimeout(settleTimer); };
+    track.addEventListener('scrollend', settle);
+    const goTo = (i) => {
+      const target = Math.max(0, Math.min(cards.length - 1, i));
+      settling = true;
+      clearTimeout(settleTimer);
+      settleTimer = setTimeout(settle, 900);
+      setCurrent(target);
+      track.scrollTo({ left: target * track.clientWidth });
+    };
+    track.addEventListener('scroll', () => {
+      if (!settling) setCurrent(Math.round(track.scrollLeft / track.clientWidth));
+    }, { passive: true });
+    prev.addEventListener('click', () => goTo(current - 1));
+    next.addEventListener('click', () => goTo(current + 1));
+    track.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') { e.preventDefault(); goTo(current + 1); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(current - 1); }
+    });
+    window.addEventListener('resize', () => {
+      track.style.scrollBehavior = 'auto';
+      track.scrollTo({ left: current * track.clientWidth });
+      track.style.scrollBehavior = '';
+    });
+    setCurrent(0);
+  }
+
   // ----- Carousels (photos and book slides) -----
   // Each .carousel scrolls with CSS scroll-snap; this adds arrows, counter, caption,
   // optional thumbnails, and hands off to the shared full-screen viewer.
