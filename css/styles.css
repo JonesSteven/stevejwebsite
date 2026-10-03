@@ -507,3 +507,7 @@ p { margin: 0 0 1em; }
 @media (hover: hover) { .blog-shot:hover img { transform: translateY(-4px); } }
 @media (max-width: 860px) { .advising { grid-template-columns: 1fr; } .blog-shot { margin: 0 -8px; } }
 #shenanigans .section-head { max-width: none; } /* intro spans the full width of the cards below */
+.advocacy-offer {
+  margin: 1.5rem 0 0; padding: 16px 20px; border-radius: 12px; color: var(--dark-ink);
+  background: rgb(127 214 188 / 8%); border: 1px solid rgb(127 214 188 / 30%); border-left: 4px solid #7fd6bc;
+}
