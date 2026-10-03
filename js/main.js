@@ -103,6 +103,9 @@
     const nextBtn = root.querySelector('.car-next');
     const captionEl = root.querySelector('.car-caption');
     const countEl = root.querySelector('.car-count');
+    const range = root.querySelector('.car-range'); // optional slide scrubber
+    const jump = root.querySelector('.car-jump'); // optional chapter menu
+    const chapterStarts = jump ? [...jump.options].map((o) => Number(o.value)) : [];
     const altOf = (i) => slides[i].querySelector('img').alt;
     const fullSrc = (i) => slides[i].querySelector('a').href;
     let current = -1;
@@ -120,6 +123,11 @@
       countEl.textContent = `${i + 1} / ${slides.length}`;
       prevBtn.disabled = i === 0;
       nextBtn.disabled = i === slides.length - 1;
+      if (range) {
+        range.value = i + 1;
+        range.setAttribute('aria-valuetext', `Slide ${i + 1} of ${slides.length}: ${altOf(i)}`);
+      }
+      if (jump) jump.value = String(chapterStarts.filter((n) => n <= i + 1).pop() ?? chapterStarts[0]);
       if (!thumbs.length) return;
       thumbs.forEach((t, k) => t.setAttribute('aria-current', k === i ? 'true' : 'false'));
       // Keep the active thumbnail in view without moving the page vertically.
@@ -147,6 +155,9 @@
     prevBtn.addEventListener('click', () => goTo(current - 1));
     nextBtn.addEventListener('click', () => goTo(current + 1));
     thumbs.forEach((t, i) => t.addEventListener('click', () => goTo(i)));
+    // Dragging the scrubber jumps instantly; the chapter menu glides to the chapter's first slide.
+    range?.addEventListener('input', () => goTo(Number(range.value) - 1, true));
+    jump?.addEventListener('change', () => goTo(Number(jump.value) - 1));
     track.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowRight') { e.preventDefault(); goTo(current + 1); }
       if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(current - 1); }
