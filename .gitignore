@@ -5,3 +5,9 @@
 *.docx
 # ...except the book files, which are published on purpose
 !/book/*.pdf
+# Source images dropped in the project root (site images live in img/)
+/*.webp
+/*.jpg
+/*.jpeg
+/*.png
+/*.heic

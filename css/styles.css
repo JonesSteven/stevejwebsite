@@ -378,40 +378,80 @@ p { margin: 0 0 1em; }
 .slides-download { margin: 12px 0 0; font-size: 0.95rem; }
 .advocacy-intro { font-size: 1.125rem; color: var(--dark-ink); margin-bottom: 1.25rem; max-width: 34em; }
 
-/* Advocacy: "In the news" story cards (scroll-snap; JS adds arrows, dots, counter) */
-.news { align-self: center; min-width: 0; } /* let the card strip scroll instead of widening the grid column */
-.news-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
-.news-head h3 { margin: 0; font-size: 1.2rem; color: #fff; }
-.news-count { margin: 0; font-size: 0.9rem; color: var(--dark-soft); font-variant-numeric: tabular-nums; }
-.news-track {
-  list-style: none; margin: 0; padding: 0; display: flex; overflow-x: auto;
-  scroll-snap-type: x mandatory; scroll-behavior: smooth; overscroll-behavior-x: contain; scrollbar-width: none;
-  border-radius: var(--radius);
-}
-.news-track::-webkit-scrollbar { display: none; }
-@media (prefers-reduced-motion: reduce) { .news-track { scroll-behavior: auto; } }
-.news-card {
-  flex: 0 0 100%; scroll-snap-align: start; scroll-snap-stop: always;
-  display: flex; flex-direction: column; min-height: 300px; padding: 26px 26px 22px;
-  background: rgb(255 255 255 / 6%); border: 1px solid rgb(255 255 255 / 12%); border-radius: var(--radius);
-}
-.news-source { margin: 0 0 12px; font-size: 0.85rem; color: var(--dark-soft); }
-.news-pub { font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #7fd6bc; }
-.news-card h4 { margin: 0 0 12px; font-size: 1.3rem; line-height: 1.3; letter-spacing: -0.01em; }
-.news-card h4 a { color: #fff; text-decoration: none; }
-.news-card h4 a:hover { text-decoration: underline; text-decoration-thickness: 1px; }
-.news-summary { color: var(--dark-ink); margin: 0 0 16px; }
-.news-link { margin-top: auto; font-weight: 600; }
-.news-nav { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; }
+/* Advocacy photo */
+.advocacy-photo { justify-self: center; max-width: 400px; width: 100%; }
+.advocacy-photo img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; border-radius: 20px; box-shadow: 0 20px 50px rgb(0 0 0 / 40%); }
+@media (max-width: 860px) { .advocacy-photo { max-width: 320px; } }
+
+/* Advocacy: "In the news" as a row of newspaper pages (scroll-snap; JS adds arrows, dots, counter) */
+.news { margin-top: clamp(48px, 7vw, 80px); min-width: 0; }
+.news-head { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 18px; }
+.news-head h3 { margin: 0; font-size: clamp(1.5rem, 2.6vw, 1.9rem); color: #fff; }
+.news-count { margin: 4px 0 0; font-size: 0.9rem; color: var(--dark-soft); font-variant-numeric: tabular-nums; }
+.news-nav { display: flex; gap: 10px; }
 .news-btn {
-  width: 42px; height: 42px; flex: none; border-radius: 50%; cursor: pointer;
-  border: 1px solid rgb(255 255 255 / 25%); background: transparent; color: #fff; font-size: 1.5rem; line-height: 1;
+  width: 44px; height: 44px; border-radius: 50%; cursor: pointer;
+  border: 1px solid rgb(255 255 255 / 25%); background: transparent; color: #fff; font-size: 1.6rem; line-height: 1;
   display: grid; place-items: center; transition: background .15s ease, opacity .15s ease;
 }
 .news-btn:hover { background: rgb(255 255 255 / 12%); }
 .news-btn:disabled { opacity: 0.3; cursor: default; background: transparent; }
-.news-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
-.news-dots span { width: 7px; height: 7px; border-radius: 50%; background: rgb(255 255 255 / 25%); transition: background .15s ease, transform .15s ease; }
-.news-dots span.on { background: #7fd6bc; transform: scale(1.3); }
-.no-js .news-nav { display: none; }
-@media (max-width: 860px) { .news { margin-top: 8px; } .news-card { min-height: 0; } }
+.no-js .news-nav, .no-js .news-dots { display: none; }
+
+.news-track {
+  --gap: 20px; --per: 3;
+  list-style: none; margin: 0; padding: 6px 2px 22px; display: flex; gap: var(--gap); overflow-x: auto;
+  scroll-snap-type: x mandatory; scroll-behavior: smooth; overscroll-behavior-x: contain; scrollbar-width: none;
+}
+.news-track::-webkit-scrollbar { display: none; }
+@media (prefers-reduced-motion: reduce) { .news-track { scroll-behavior: auto; } }
+@media (max-width: 1000px) { .news-track { --per: 2; } }
+@media (max-width: 640px) { .news-track { --per: 1.12; --gap: 14px; } }
+.paper { flex: 0 0 calc((100% - (var(--per) - 1) * var(--gap)) / var(--per)); scroll-snap-align: start; display: flex; }
+
+/* The newspaper page itself */
+.paper article {
+  --ink: #1d1c1a; --ink-soft: #5b564c; --rule: #2a2824;
+  flex: 1; display: flex; flex-direction: column; padding: 20px 22px 18px;
+  color: var(--ink); font-family: Georgia, "Times New Roman", Times, serif;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgb(255 255 255 / 55%), transparent 70%),
+    linear-gradient(180deg, #f6f1e4, #ece4d1);
+  border-radius: 3px;
+  box-shadow: 0 1px 0 rgb(0 0 0 / 20%), 0 14px 30px rgb(0 0 0 / 45%);
+  transition: transform .2s ease;
+}
+@media (hover: hover) { .paper article:hover { transform: translateY(-4px) rotate(-0.4deg); } }
+.paper-masthead {
+  margin: 0; padding-bottom: 8px; text-align: center; font-weight: 700; font-size: 1.55rem; line-height: 1.1;
+  letter-spacing: 0.01em; border-bottom: 4px double var(--rule);
+}
+.paper-dateline {
+  display: flex; justify-content: space-between; gap: 8px; margin: 0 0 14px; padding: 5px 0;
+  font-family: "Inter", system-ui, sans-serif; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ink-soft); border-bottom: 1px solid var(--rule);
+}
+.paper-headline { margin: 0 0 14px; font-size: 1.32rem; line-height: 1.2; font-weight: 700; letter-spacing: -0.005em; }
+.paper-headline a { color: var(--ink); text-decoration: none; }
+.paper-headline a:hover { text-decoration: underline; text-decoration-thickness: 1px; }
+.paper-quote { margin: 0 0 14px; padding: 12px 0 10px; border-top: 1px solid #b8ae98; border-bottom: 1px solid #b8ae98; }
+.paper-quote p { margin: 0; font-style: italic; font-size: 1.06rem; line-height: 1.45; }
+.paper-quote footer { margin-top: 6px; font-family: "Inter", system-ui, sans-serif; font-size: 0.78rem; font-weight: 600; letter-spacing: 0.04em; color: var(--ink-soft); }
+.paper-brief { margin: 0 0 14px; font-size: 1.02rem; line-height: 1.45; }
+.paper-brief span { font-family: "Inter", system-ui, sans-serif; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-right: 4px; }
+/* faint two-column "newsprint" under the story */
+.paper-quote::after, .paper-brief::after {
+  content: ""; display: block; height: 34px; margin-top: 14px; opacity: 0.55;
+  background:
+    repeating-linear-gradient(to bottom, #b8ae98 0 2px, transparent 2px 7px) left top / 47% 100% no-repeat,
+    repeating-linear-gradient(to bottom, #b8ae98 0 2px, transparent 2px 7px) right top / 47% 100% no-repeat;
+}
+.paper-link { margin-top: auto; padding-top: 6px; font-family: "Inter", system-ui, sans-serif; font-weight: 650; font-size: 0.92rem; color: #1f6f5c; }
+
+.news-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 4px; }
+.news-dots span { width: 7px; height: 7px; border-radius: 50%; background: rgb(255 255 255 / 22%); transition: background .15s ease; }
+.news-dots span.on { background: #7fd6bc; }
+/* On the cream pages, use dark ink colours (the dark section's light link colour is unreadable here) */
+.section-dark .paper-link { color: #1f6f5c; }
+.section-dark .paper-headline a { color: var(--ink); }
+@media (max-width: 640px) { .paper-dateline span { display: none; } }

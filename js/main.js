@@ -35,40 +35,48 @@
     }
   }));
 
-  // ----- "In the news" story cards -----
+  // ----- "In the news": a row of newspaper pages, one or more visible at a time -----
   const news = document.querySelector('.news');
   if (news) {
     const track = news.querySelector('.news-track');
-    const cards = [...track.querySelectorAll('.news-card')];
+    const cards = [...track.querySelectorAll('.paper')];
     const prev = news.querySelector('.news-prev');
     const next = news.querySelector('.news-next');
     const count = news.querySelector('.news-count');
     const dots = cards.map(() => news.querySelector('.news-dots').appendChild(document.createElement('span')));
+    const step = () => cards[1].offsetLeft - cards[0].offsetLeft;
+    const gap = () => step() - cards[0].offsetWidth;
+    const visible = () => Math.max(1, Math.round((track.clientWidth + gap()) / step()));
+    const lastStart = () => Math.max(0, cards.length - visible());
     let current = -1;
     const setCurrent = (i) => {
-      if (i === current) return;
       current = i;
-      count.textContent = `${i + 1} / ${cards.length}`;
-      prev.disabled = i === 0;
-      next.disabled = i === cards.length - 1;
-      dots.forEach((d, k) => d.classList.toggle('on', k === i));
+      const v = visible();
+      const end = Math.min(cards.length, i + v);
+      count.textContent = v > 1 ? `${i + 1}–${end} of ${cards.length} stories` : `${i + 1} of ${cards.length} stories`;
+      prev.disabled = i <= 0;
+      next.disabled = i >= lastStart();
+      dots.forEach((d, k) => d.classList.toggle('on', k >= i && k < end));
     };
     // Ignore intermediate positions while an arrow-triggered scroll animates.
     let settling = false;
     let settleTimer;
-    const settle = () => { settling = false; clearTimeout(settleTimer); };
+    // ...then re-sync with wherever the strip actually ended up.
+    const settle = () => { settling = false; clearTimeout(settleTimer); fromScroll(); };
     track.addEventListener('scrollend', settle);
     const goTo = (i) => {
-      const target = Math.max(0, Math.min(cards.length - 1, i));
+      const target = Math.max(0, Math.min(lastStart(), i));
       settling = true;
       clearTimeout(settleTimer);
       settleTimer = setTimeout(settle, 900);
       setCurrent(target);
-      track.scrollTo({ left: target * track.clientWidth });
+      track.scrollTo({ left: target * step() });
     };
-    track.addEventListener('scroll', () => {
-      if (!settling) setCurrent(Math.round(track.scrollLeft / track.clientWidth));
-    }, { passive: true });
+    const fromScroll = () => {
+      const atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 2;
+      setCurrent(atEnd ? lastStart() : Math.round(track.scrollLeft / step()));
+    };
+    track.addEventListener('scroll', () => { if (!settling) fromScroll(); }, { passive: true });
     prev.addEventListener('click', () => goTo(current - 1));
     next.addEventListener('click', () => goTo(current + 1));
     track.addEventListener('keydown', (e) => {
@@ -77,8 +85,9 @@
     });
     window.addEventListener('resize', () => {
       track.style.scrollBehavior = 'auto';
-      track.scrollTo({ left: current * track.clientWidth });
+      track.scrollTo({ left: Math.min(current, lastStart()) * step() });
       track.style.scrollBehavior = '';
+      fromScroll();
     });
     setCurrent(0);
   }
