@@ -253,8 +253,8 @@ p { margin: 0 0 1em; }
 }
 .car-track::-webkit-scrollbar { display: none; }
 @media (prefers-reduced-motion: reduce) { .car-track { scroll-behavior: auto; } }
-.car-slide { flex: 0 0 100%; scroll-snap-align: center; scroll-snap-stop: always; display: grid; place-items: center; }
-.car-slide a { display: block; width: 100%; height: 100%; cursor: zoom-in; }
+.car-slide { flex: 0 0 100%; scroll-snap-align: center; scroll-snap-stop: always; position: relative; }
+.car-slide a { position: absolute; inset: 0; display: block; cursor: zoom-in; }
 .car-slide img { width: 100%; height: 100%; object-fit: contain; }
 
 .car-btn {
@@ -376,7 +376,8 @@ p { margin: 0 0 1em; }
 .btn-meta { font-weight: 500; color: var(--ink-soft); }
 
 /* Book summary slides reuse the carousel; slides are 16:9 */
-.slides-carousel .car-track { aspect-ratio: 16 / 9; max-height: 72vh; }
+.slides-carousel { max-width: max(300px, calc((100vh - 230px) * 16 / 9)); margin-inline: auto; }
+.slides-carousel .car-track { aspect-ratio: 16 / 9; max-height: none; }
 .slides-download { margin: 12px 0 0; font-size: 0.95rem; }
 .advocacy-intro { font-size: 1.125rem; color: var(--dark-ink); margin-bottom: 1.25rem; max-width: 34em; }
 
