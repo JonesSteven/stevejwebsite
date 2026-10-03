@@ -506,3 +506,4 @@ p { margin: 0 0 1em; }
 .blog-shot img { width: 100%; height: auto; transition: transform .4s ease; }
 @media (hover: hover) { .blog-shot:hover img { transform: translateY(-4px); } }
 @media (max-width: 860px) { .advising { grid-template-columns: 1fr; } .blog-shot { margin: 0 -8px; } }
+#shenanigans .section-head { max-width: none; } /* intro spans the full width of the cards below */
