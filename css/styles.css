@@ -364,7 +364,9 @@ p { margin: 0 0 1em; }
 
 /* Brand icons inside links and buttons */
 .icon { width: 1.1em; height: 1.1em; flex: none; }
-.icon-link { display: inline-flex; align-items: center; gap: 0.35em; }
+/* Align on the text, not the icon, so icon links line up with plain links */
+.icon-link { display: inline-flex; align-items: baseline; gap: 0.35em; }
+.icon-link .icon { align-self: center; }
 
 /* Book: buy + free downloads */
 .free-copy { margin-top: 1.25rem; }
