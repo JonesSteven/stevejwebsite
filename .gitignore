@@ -1,0 +1,5 @@
+.DS_Store
+
+# Private: never publish
+*.pdf
+*.docx
