@@ -35,98 +35,107 @@
     }
   }));
 
-  // ----- Photo carousel -----
-  const track = document.querySelector('.car-track');
-  if (!track) return;
-  const slides = [...track.querySelectorAll('.car-slide')];
-  const thumbs = [...document.querySelectorAll('.car-thumb')];
-  const prevBtn = document.querySelector('.car-prev');
-  const nextBtn = document.querySelector('.car-next');
-  const captionEl = document.querySelector('.car-caption');
-  const countEl = document.querySelector('.car-count');
-  const altOf = (i) => slides[i].querySelector('img').alt;
-  let current = -1;
+  // ----- Carousels (photos and book slides) -----
+  // Each .carousel scrolls with CSS scroll-snap; this adds arrows, counter, caption,
+  // optional thumbnails, and hands off to the shared full-screen viewer.
+  const setupCarousel = (root) => {
+    const track = root.querySelector('.car-track');
+    const slides = [...track.querySelectorAll('.car-slide')];
+    const thumbs = [...root.querySelectorAll('.car-thumb')];
+    const prevBtn = root.querySelector('.car-prev');
+    const nextBtn = root.querySelector('.car-next');
+    const captionEl = root.querySelector('.car-caption');
+    const countEl = root.querySelector('.car-count');
+    const altOf = (i) => slides[i].querySelector('img').alt;
+    const fullSrc = (i) => slides[i].querySelector('a').href;
+    let current = -1;
 
-  // While an arrow/thumbnail scroll is animating, ignore intermediate slides.
-  let settling = false;
-  let settleTimer;
-  const settle = () => { settling = false; clearTimeout(settleTimer); };
-  track.addEventListener('scrollend', settle);
+    // While an arrow/thumbnail scroll is animating, ignore intermediate slides.
+    let settling = false;
+    let settleTimer;
+    const settle = () => { settling = false; clearTimeout(settleTimer); };
+    track.addEventListener('scrollend', settle);
 
-  const goTo = (i) => {
-    const target = Math.max(0, Math.min(slides.length - 1, i));
-    settling = true;
-    clearTimeout(settleTimer);
-    settleTimer = setTimeout(settle, 900); // fallback where scrollend is unsupported
-    setCurrent(target);
-    track.scrollTo({ left: target * track.clientWidth });
+    const setCurrent = (i) => {
+      if (i === current) return;
+      current = i;
+      captionEl.textContent = altOf(i);
+      countEl.textContent = `${i + 1} / ${slides.length}`;
+      prevBtn.disabled = i === 0;
+      nextBtn.disabled = i === slides.length - 1;
+      if (!thumbs.length) return;
+      thumbs.forEach((t, k) => t.setAttribute('aria-current', k === i ? 'true' : 'false'));
+      // Keep the active thumbnail in view without moving the page vertically.
+      const strip = thumbs[i].parentElement;
+      const t = thumbs[i];
+      strip.scrollTo({ left: t.offsetLeft - strip.offsetLeft - (strip.clientWidth - t.clientWidth) / 2, behavior: 'smooth' });
+    };
+
+    const goTo = (i, instant = false) => {
+      const target = Math.max(0, Math.min(slides.length - 1, i));
+      settling = true;
+      clearTimeout(settleTimer);
+      settleTimer = setTimeout(settle, 900); // fallback where scrollend is unsupported
+      setCurrent(target);
+      if (instant) track.style.scrollBehavior = 'auto';
+      track.scrollTo({ left: target * track.clientWidth });
+      if (instant) track.style.scrollBehavior = '';
+    };
+
+    // Track which slide is showing after swipes, trackpad scrolls and keyboard scrolling.
+    track.addEventListener('scroll', () => {
+      if (!settling) setCurrent(Math.round(track.scrollLeft / track.clientWidth));
+    }, { passive: true });
+
+    prevBtn.addEventListener('click', () => goTo(current - 1));
+    nextBtn.addEventListener('click', () => goTo(current + 1));
+    thumbs.forEach((t, i) => t.addEventListener('click', () => goTo(i)));
+    track.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') { e.preventDefault(); goTo(current + 1); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(current - 1); }
+    });
+    // Keep the same slide in place when the window is resized or rotated.
+    window.addEventListener('resize', () => goTo(current, true));
+    setCurrent(0);
+
+    return { track, slides, altOf, fullSrc, goTo };
   };
 
-  const setCurrent = (i) => {
-    if (i === current) return;
-    current = i;
-    captionEl.textContent = altOf(i);
-    countEl.textContent = `${i + 1} / ${slides.length}`;
-    prevBtn.disabled = i === 0;
-    nextBtn.disabled = i === slides.length - 1;
-    thumbs.forEach((t, k) => t.setAttribute('aria-current', k === i ? 'true' : 'false'));
-    // Keep the active thumbnail in view without moving the page vertically.
-    const strip = thumbs[i].parentElement;
-    const t = thumbs[i];
-    strip.scrollTo({ left: t.offsetLeft - strip.offsetLeft - (strip.clientWidth - t.clientWidth) / 2, behavior: 'smooth' });
-  };
+  const carousels = [...document.querySelectorAll('.carousel')].map(setupCarousel);
 
-  // Track which slide is showing after swipes, trackpad scrolls and keyboard scrolling.
-  track.addEventListener('scroll', () => {
-    if (!settling) setCurrent(Math.round(track.scrollLeft / track.clientWidth));
-  }, { passive: true });
-
-  prevBtn.addEventListener('click', () => goTo(current - 1));
-  nextBtn.addEventListener('click', () => goTo(current + 1));
-  thumbs.forEach((t, i) => t.addEventListener('click', () => goTo(i)));
-  track.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowRight') { e.preventDefault(); goTo(current + 1); }
-    if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(current - 1); }
-  });
-  // Keep the same photo in place when the window is resized or rotated.
-  window.addEventListener('resize', () => {
-    track.style.scrollBehavior = 'auto';
-    goTo(current);
-    track.style.scrollBehavior = '';
-  });
-  setCurrent(0);
-
-  // ----- Full-screen viewer -----
+  // ----- Full-screen viewer (shared by all carousels) -----
   const dialog = document.querySelector('.lightbox');
   if (!dialog || typeof dialog.showModal !== 'function') return;
 
   const img = dialog.querySelector('.lb-img');
   const caption = dialog.querySelector('.lb-caption');
-  const fullSrc = (i) => slides[i].querySelector('a').href;
+  let active = null;
   let index = 0;
 
   const show = (i) => {
-    index = (i + slides.length) % slides.length;
-    img.src = fullSrc(index);
-    img.alt = altOf(index);
-    caption.textContent = `${altOf(index)} · ${index + 1} / ${slides.length}`;
+    const n = active.slides.length;
+    index = (i + n) % n;
+    img.src = active.fullSrc(index);
+    img.alt = active.altOf(index);
+    caption.textContent = `${active.altOf(index)} · ${index + 1} / ${n}`;
     // Warm the cache for the neighbours so arrowing feels instant.
-    [index + 1, index - 1].forEach((n) => {
-      new Image().src = fullSrc((n + slides.length) % slides.length);
+    [index + 1, index - 1].forEach((k) => {
+      new Image().src = active.fullSrc((k + n) % n);
     });
   };
 
-  slides.forEach((s, i) => s.querySelector('a').addEventListener('click', (e) => {
+  carousels.forEach((c) => c.slides.forEach((s, i) => s.querySelector('a').addEventListener('click', (e) => {
     e.preventDefault();
+    active = c;
     show(i);
     dialog.showModal();
-  }));
+  })));
 
   dialog.querySelector('.lb-prev').addEventListener('click', () => show(index - 1));
   dialog.querySelector('.lb-next').addEventListener('click', () => show(index + 1));
   dialog.querySelector('.lb-close').addEventListener('click', () => dialog.close());
 
-  // Close when clicking the dark area outside the photo.
+  // Close when clicking the dark area outside the image.
   dialog.addEventListener('click', (e) => {
     if (e.target === dialog || e.target.tagName === 'FIGURE') dialog.close();
   });
@@ -136,12 +145,11 @@
     if (e.key === 'ArrowLeft') show(index - 1);
   });
 
-  // Return to the carousel on the photo last viewed full screen.
+  // Return to the carousel on the slide last viewed full screen.
   dialog.addEventListener('close', () => {
-    track.style.scrollBehavior = 'auto';
-    goTo(index);
-    track.style.scrollBehavior = '';
-    track.focus({ preventScroll: true });
+    if (!active) return;
+    active.goTo(index, true);
+    active.track.focus({ preventScroll: true });
   });
 
   // Swipe on touch screens.

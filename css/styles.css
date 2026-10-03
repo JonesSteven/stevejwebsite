@@ -361,3 +361,18 @@ p { margin: 0 0 1em; }
 .fun-body h3 { font-size: 1.25rem; }
 .fun-body p:not(.role-tag) { color: var(--ink-soft); font-size: 0.98rem; }
 .fun-link { margin-top: auto; font-weight: 600; font-size: 0.95rem; }
+
+/* Brand icons inside links and buttons */
+.icon { width: 1.1em; height: 1.1em; flex: none; }
+.icon-link { display: inline-flex; align-items: center; gap: 0.35em; }
+
+/* Book: buy + free downloads */
+.free-copy { margin-top: 1.25rem; }
+.free-label { margin: 0 0 0.5rem; font-size: 0.9rem; font-weight: 600; color: var(--ink-soft); }
+.btn-row-tight { margin-top: 0; gap: 8px; }
+.btn-sm { padding: 0.5em 1em; font-size: 0.9rem; }
+.btn-meta { font-weight: 500; color: var(--ink-soft); }
+
+/* Book summary slides reuse the carousel; slides are 16:9 */
+.slides-carousel .car-track { aspect-ratio: 16 / 9; max-height: 72vh; }
+.slides-download { margin: 12px 0 0; font-size: 0.95rem; }
