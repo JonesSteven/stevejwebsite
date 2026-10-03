@@ -1,6 +1,6 @@
 # stevej.ca
 
-Personal website for Steve Jones. A single static page with no build step, no cookies, no tracking and no third-party requests. Fonts and images are all self-hosted.
+Personal website for Steve Jones. A single static page with no build step and no cookies. Fonts, images and scripts are all self-hosted. The only outside request is an anonymous page-view count sent to GoatCounter.
 
 ## Structure
 
@@ -36,6 +36,14 @@ Edit `index.html` directly. Each section is commented (`<!-- Leadership -->`, `<
 ```
 
 The counter and captions are generated from these automatically.
+
+## Visitor stats
+
+GoatCounter (cookie-free) records anonymous page views. Dashboard: https://stevej.goatcounter.com
+
+- `js/goatcounter.js` is a self-hosted copy of https://gc.zgo.at/count.js (ISC license). Re-download it occasionally to pick up updates.
+- Visits from localhost aren't counted.
+- To stop counting your own visits, open https://stevej.ca/#toggle-goatcounter once in each browser you use.
 
 ## Preview locally
 
