@@ -378,3 +378,4 @@ p { margin: 0 0 1em; }
 /* Book summary slides reuse the carousel; slides are 16:9 */
 .slides-carousel .car-track { aspect-ratio: 16 / 9; max-height: 72vh; }
 .slides-download { margin: 12px 0 0; font-size: 0.95rem; }
+.advocacy-intro { font-size: 1.125rem; color: var(--dark-ink); margin-bottom: 1.25rem; max-width: 34em; }
