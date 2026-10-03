@@ -54,6 +54,8 @@ python3 -m http.server 8000
 
 ## Deploy
 
+When you change `css/styles.css` or `js/main.js`, bump the `?v=` number on their links in `index.html` (any new value works, e.g. the date and time). Browsers cache these files for 10 minutes, and a new version number makes them fetch the updated files right away.
+
 GitHub Pages serves the `main` branch root. Commit and push, and the site updates within a minute or two.
 
 Until the custom domain is set, the site is at https://jonessteven.github.io/stevejwebsite/.
