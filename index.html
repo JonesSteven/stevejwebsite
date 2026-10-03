@@ -19,27 +19,88 @@
   <meta name="twitter:card" content="summary_large_image">
 
   <link rel="preload" href="fonts/inter-latin-var.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="css/styles.css?v=202610030006">
+  <link rel="stylesheet" href="css/styles.css?v=202610030024">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231f6f5c'/%3E%3Ctext x='32' y='43' font-family='Arial,sans-serif' font-size='28' font-weight='700' fill='white' text-anchor='middle'%3ESJ%3C/text%3E%3C/svg%3E">
 
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Person",
-    "name": "Steve Jones",
-    "honorificSuffix": "CFA",
-    "jobTitle": "Co-Founder & CEO",
-    "worksFor": { "@type": "Organization", "name": "VeilStream", "url": "https://www.veilstream.com/" },
-    "url": "https://stevej.ca/",
-    "email": "mailto:steve@stevej.ca",
-    "image": "https://stevej.ca/img/steve-jones.jpg",
-    "sameAs": [
-      "https://www.linkedin.com/in/jonessteven/",
-      "https://github.com/JonesSteven",
-      "https://blog.stevej.ca/",
-      "https://stevejoneshikes.medium.com/"
-    ]
-  }
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Person",
+      "@id": "https://stevej.ca/#person",
+      "name": "Steve Jones",
+      "alternateName": "Steven Jones",
+      "honorificSuffix": "CFA",
+      "jobTitle": "Co-Founder & CEO",
+      "url": "https://stevej.ca/",
+      "email": "mailto:steve@stevej.ca",
+      "image": "https://stevej.ca/img/steve-jones.jpg",
+      "description": "Product executive with two decades of experience building B2B SaaS companies through two acquisitions, and author of A Mind Made of Math.",
+      "worksFor": {
+        "@type": "Organization",
+        "name": "VeilStream",
+        "url": "https://www.veilstream.com/"
+      },
+      "alumniOf": {
+        "@type": "CollegeOrUniversity",
+        "name": "University of British Columbia",
+        "url": "https://www.ubc.ca/"
+      },
+      "hasCredential": {
+        "@type": "EducationalOccupationalCredential",
+        "name": "Chartered Financial Analyst (CFA)",
+        "credentialCategory": "Professional certification",
+        "recognizedBy": {
+          "@type": "Organization",
+          "name": "CFA Institute",
+          "url": "https://www.cfainstitute.org/"
+        }
+      },
+      "knowsAbout": [
+        "Product management",
+        "B2B SaaS",
+        "Artificial intelligence",
+        "Data platforms",
+        "Outdoor recreation advocacy"
+      ],
+      "sameAs": [
+        "https://www.linkedin.com/in/jonessteven/",
+        "https://github.com/JonesSteven",
+        "https://blog.stevej.ca/",
+        "https://stevejoneshikes.medium.com/"
+      ]
+    },
+    {
+      "@type": "Book",
+      "@id": "https://stevej.ca/#book",
+      "name": "A Mind Made of Math",
+      "alternativeHeadline": "Decoding the AI and Robotics Revolution for Individuals, Leaders, and Society",
+      "author": {
+        "@id": "https://stevej.ca/#person"
+      },
+      "datePublished": "2025",
+      "inLanguage": "en",
+      "url": "https://stevej.ca/#author",
+      "image": "https://stevej.ca/img/a-mind-made-of-math.jpg",
+      "sameAs": [
+        "https://www.amazon.com/dp/B0FCMNWBZ5/"
+      ]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://stevej.ca/#website",
+      "url": "https://stevej.ca/",
+      "name": "Steve Jones, CFA",
+      "inLanguage": "en",
+      "publisher": {
+        "@id": "https://stevej.ca/#person"
+      }
+    }
+  ]
+}
   </script>
 </head>
 <body>
@@ -48,7 +109,11 @@
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="#top" aria-label="Steve Jones, home">Steve Jones</a>
-      <nav aria-label="Sections">
+      <button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path class="mb-top" d="M4 7h16"/><path class="mb-mid" d="M4 12h16"/><path class="mb-bot" d="M4 17h16"/></svg>
+        <span>Menu</span>
+      </button>
+      <nav id="site-nav" aria-label="Sections">
         <ul class="nav-links">
           <li><a href="#leadership">Leadership</a></li>
           <li><a href="#author">AI</a></li>
@@ -381,7 +446,7 @@
             <p>A supervised research assistant that students use by email. The AI writes an age-appropriate, cited research essay, and a parent must approve it before the student receives it.</p>
           </article>
         </div>
-        <p class="talk-note">I talked about SlothSpeak, StudentSafeAI and building AI products that deliver value through intelligence rather than manipulation in <em>All Juice, No Pulp</em> at the Comox Valley AI meetup (BC + AI), May 2026. <a href="https://bc-ai.ca/news/comox-valley-ai-is-becoming-its-own-thing" rel="noopener">Read the recap&nbsp;→</a></p>
+        <p class="talk-note">I co-lead the Comox Valley chapter of BC + AI. At our May 2026 meetup I talked about SlothSpeak, StudentSafeAI and building AI products that deliver value through intelligence rather than manipulation in <em>All Juice, No Pulp</em>. <a href="https://bc-ai.ca/news/comox-valley-ai-is-becoming-its-own-thing" rel="noopener">Read the recap&nbsp;→</a></p>
         <a class="btn btn-ghost github-btn" href="https://github.com/JonesSteven" rel="noopener">
           <svg aria-hidden="true" width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
           More on GitHub
@@ -441,6 +506,7 @@
           <p class="advocacy-intro">I’m a strong believer in the importance of public access to nature. I volunteer and advocate for a variety of causes that protect and improve that access.</p>
           <ul class="checklist">
             <li>Finance Committee, <strong>BC Search and Rescue Association (BCSARA)</strong></li>
+            <li>Organizer, <strong>North Shore Dawn Patrol</strong></li>
             <li>Past Chair, <strong>BC AdventureSmart Advisory Committee</strong></li>
             <li>Former Board Member, <strong>Leave No Trace Canada</strong></li>
             <li>Campaigned for change at <strong>Mountain Equipment Co-op</strong></li>
@@ -816,7 +882,7 @@
     <button class="lb-btn lb-next" type="button" aria-label="Next photo">›</button>
   </dialog>
 
-  <script src="js/main.js?v=202610030006" defer></script>
+  <script src="js/main.js?v=202610030024" defer></script>
   <!-- GoatCounter: cookie-free, anonymous page-view counts (script self-hosted) -->
   <script data-goatcounter="https://stevej.goatcounter.com/count" async src="js/goatcounter.js"></script>
 </body>

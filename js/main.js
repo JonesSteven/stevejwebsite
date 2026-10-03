@@ -19,6 +19,32 @@
     });
   }
 
+  // ----- Phone menu: the "Menu" button shows the links as a drop-down panel -----
+  const header = document.querySelector('.site-header');
+  const menuBtn = document.querySelector('.menu-btn');
+  if (header && menuBtn) {
+    const setMenu = (open) => {
+      header.classList.toggle('menu-open', open);
+      menuBtn.setAttribute('aria-expanded', String(open));
+    };
+    menuBtn.addEventListener('click', () => setMenu(!header.classList.contains('menu-open')));
+    links.forEach((a) => a.addEventListener('click', () => setMenu(false)));
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && header.classList.contains('menu-open')) {
+        setMenu(false);
+        menuBtn.focus();
+      }
+    });
+    // A tap outside the open menu just closes it; it shouldn't also activate a link underneath.
+    document.addEventListener('click', (e) => {
+      if (!header.classList.contains('menu-open') || header.contains(e.target)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setMenu(false);
+    }, true);
+    window.matchMedia('(min-width: 861px)').addEventListener('change', (e) => { if (e.matches) setMenu(false); });
+  }
+
   // ----- Career cards: one details panel open at a time -----
   const careerCards = [...document.querySelectorAll('.career-card')];
   const panelFor = (card) => document.getElementById(card.getAttribute('aria-controls'));

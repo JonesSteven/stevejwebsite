@@ -14,6 +14,9 @@ img/gallery/NN.jpg      Full-size gallery photos (1800px long edge)
 img/gallery/NN-thumb.jpg  Carousel images for smaller screens (720px long edge)
 img/gallery/NN-mini.jpg   Thumbnail strip (240x160)
 CNAME                   (added by GitHub when the custom domain is set)
+404.html                Not-found page (root-absolute paths; bump its ?v= with index.html)
+robots.txt, sitemap.xml For search engines; update sitemap lastmod after big content changes
+apple-touch-icon.png, favicon-32.png  Site icons
 ```
 
 ## Editing

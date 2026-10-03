@@ -112,12 +112,35 @@ p { margin: 0 0 1em; }
 .nav-links .nav-cta { background: var(--ink); color: var(--bg); }
 .nav-links .nav-cta:hover, .nav-links .nav-cta.active { background: var(--accent); color: var(--accent-ink); }
 
+/* Phone menu: a "Menu" button that drops the links down as a panel */
+.menu-btn {
+  display: none; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; cursor: pointer;
+  font: inherit; font-size: 0.95rem; font-weight: 600; color: var(--ink); background: var(--bg-alt); border: 1px solid var(--line);
+}
+.menu-btn svg { width: 18px; height: 18px; }
+.menu-btn path { transition: transform .2s ease, opacity .2s ease; transform-origin: 12px 12px; }
+.menu-btn[aria-expanded="true"] .mb-top { transform: translateY(5px) rotate(45deg); }
+.menu-btn[aria-expanded="true"] .mb-mid { opacity: 0; }
+.menu-btn[aria-expanded="true"] .mb-bot { transform: translateY(-5px) rotate(-45deg); }
+
 @media (max-width: 860px) {
-  .header-inner { flex-direction: column; align-items: stretch; gap: 0; padding-top: 10px; }
-  .brand { padding-bottom: 4px; }
-  nav { overflow-x: auto; scrollbar-width: none; margin: 0 -20px; padding: 0 20px 8px; }
-  nav::-webkit-scrollbar { display: none; }
-  :root { --header-h: 100px; }
+  html:not(.no-js) .menu-btn { display: inline-flex; }
+  html:not(.no-js) .site-header nav {
+    display: none; position: absolute; top: 100%; left: 0; right: 0;
+    background: var(--bg); border-bottom: 1px solid var(--line); box-shadow: 0 16px 30px rgb(0 0 0 / 18%);
+    padding: 8px 20px 16px; max-height: calc(100dvh - var(--header-h)); overflow-y: auto;
+  }
+  html:not(.no-js) .site-header.menu-open nav { display: block; }
+  html:not(.no-js) .nav-links { flex-direction: column; gap: 2px; }
+  html:not(.no-js) .nav-links a { padding: 12px 14px; border-radius: 10px; font-size: 1.05rem; }
+  html:not(.no-js) .nav-links .nav-cta { margin-top: 6px; text-align: center; }
+
+  /* Without JavaScript, keep the horizontally scrolling row of links */
+  .no-js .header-inner { flex-direction: column; align-items: stretch; gap: 0; padding-top: 10px; }
+  .no-js .brand { padding-bottom: 4px; }
+  .no-js .site-header nav { overflow-x: auto; scrollbar-width: none; margin: 0 -20px; padding: 0 20px 8px; }
+  .no-js .site-header nav::-webkit-scrollbar { display: none; }
+  .no-js { --header-h: 100px; }
 }
 
 /* ---------- Hero ---------- */

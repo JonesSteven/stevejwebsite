@@ -11,3 +11,6 @@
 /*.jpeg
 /*.png
 /*.heic
+# ...except the site icons, which belong at the root
+!/apple-touch-icon.png
+!/favicon-32.png
