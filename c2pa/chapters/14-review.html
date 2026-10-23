@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Glossary and Review · Content Credentials</title>
+    <script type="module" crossorigin src="/c2pa/assets/main-DJhQTbU5.js"></script>
+    <link rel="stylesheet" crossorigin href="/c2pa/assets/main-BeFfSfFm.css">
+  </head>
+  <body data-chapter="14-review">
+    <main>
+      <h1>Glossary and final assessment</h1>
+      <p class="lede">One page to review everything: the whole system in a single picture, a searchable glossary, and a final assessment that asks you to connect the pieces.</p>
+
+      <h2>The whole system on one page</h2>
+      <div class="sysdiag" role="figure" aria-label="Structure of an asset file with Content Credentials">
+        <div class="sd-box sd-file">
+          <div class="sd-label">Asset file</div>
+          <div class="sd-box sd-content">
+            <div class="sd-label">Content bytes <span class="sd-tag t1"><b>1</b> hashed by the hard binding</span></div>
+            <div class="small muted">The pixels, audio or video themselves.</div>
+          </div>
+          <div class="sd-box">
+            <div class="sd-label">Manifest store <code>JUMBF “c2pa”</code></div>
+            <div class="sd-box sd-active">
+              <div class="sd-label">Active manifest <span class="small muted">(the newest one)</span></div>
+              <div class="sd-box">
+                <div class="sd-label">Assertion store</div>
+                <ul class="sd-rows">
+                  <li><code>c2pa.hash.data</code><span>Hard binding: SHA-256 of the content bytes, with exclusions. <span class="sd-tag t1"><b>1</b></span></span></li>
+                  <li><code>c2pa.actions.v2</code><span>What happened, e.g. created: digitalCapture, or by AI.</span></li>
+                  <li><code>c2pa.ingredient.v3</code><span>Points to an earlier manifest, with its hash. <span class="sd-tag t4"><b>4</b></span></span></li>
+                  <li><code>cawg.identity</code><span>Signed by a <b>PERSON</b> or organisation. Its <code>signer_payload</code> lists the hashes of other assertions, including the hard binding. <span class="sd-tag t1"><b>1</b></span></span></li>
+                  <li><code>cawg.training-mining</code><span>Preferences about AI training and data mining.</span></li>
+                </ul>
+              </div>
+              <div class="sd-box">
+                <div class="sd-label">Claim <span class="sd-tag t2"><b>2</b> signed</span></div>
+                <div class="small">A list of <code>{url, hash}</code> for every assertion above, so changing any assertion breaks the claim.</div>
+              </div>
+              <div class="sd-box">
+                <div class="sd-label">Claim signature <code>COSE_Sign1, ES256</code></div>
+                <div class="small">Signed by the <b>PRODUCT</b> (camera or app) over the claim. <span class="sd-tag t2"><b>2</b></span></div>
+                <ul class="sd-rows">
+                  <li><code>x5chain</code><span>Leaf → intermediate certificates, ending at a trust anchor on the C2PA Trust List. <span class="sd-tag t3"><b>3</b> trusted?</span></span></li>
+                  <li><code>RFC 3161</code><span>Time-stamp from a trusted Time-Stamp Authority: proves when it was signed.</span></li>
+                </ul>
+              </div>
+            </div>
+            <div class="sd-box sd-ingredient">
+              <div class="sd-label">Ingredient manifest <span class="sd-tag t4"><b>4</b></span></div>
+              <div class="small muted">An earlier, separately signed manifest (e.g. the camera’s), kept unchanged.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p>Read it from the bottom up, as a validator does: is the time trustworthy, is the signer trusted, does the signature cover the claim, does each assertion match its hash, do the content bytes match the hard binding? Then, for CAWG: does the person’s signature cover the hard binding, and do you trust their credential?</p>
+
+      <h2>Glossary</h2>
+      <div data-widget="glossary"></div>
+
+      <h2>Final assessment</h2>
+      <p>These questions cut across chapters. If one stumps you, the explanation points you back to the right place.</p>
+      <div data-widget="quiz" data-quiz="final"></div>
+
+      <h2>Where to go next</h2>
+      <ul>
+        <li><b>C2PA Technical Specification</b>: <a href="https://spec.c2pa.org/" rel="noopener">spec.c2pa.org</a>, especially the Validation and Trust Model sections.</li>
+        <li><b>CAWG specifications</b>: <a href="https://cawg.io/" rel="noopener">cawg.io</a>, for the identity, training-and-data-mining and metadata assertions, and current drafts.</li>
+        <li><b>Open-source tools</b>: <a href="https://opensource.contentauthenticity.org/" rel="noopener">opensource.contentauthenticity.org</a> (c2patool, c2pa-rs, c2pa-js, Python bindings).</li>
+        <li><b>Public test files</b>: <a href="https://github.com/c2pa-org/public-testfiles" rel="noopener">github.com/c2pa-org/public-testfiles</a>, for more good and deliberately broken samples.</li>
+        <li><b>Cryptography, deeper</b>: RFC 5280 (X.509 path validation), RFC 9052 (COSE), RFC 3161 (time-stamps), RFC 8949 (CBOR).</li>
+      </ul>
+      <p>You started with “why can’t I trust a photo’s metadata?”. You can now explain, link by link, how a signature from a camera you’ve never met can tell you something trustworthy about a picture, and exactly where that trust ends.</p>
+    </main>
+  </body>
+</html>

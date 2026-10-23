@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Digital Signatures · Content Credentials</title>
+    <script type="module" crossorigin src="/c2pa/assets/main-DJhQTbU5.js"></script>
+    <link rel="stylesheet" crossorigin href="/c2pa/assets/main-BeFfSfFm.css">
+  </head>
+  <body data-chapter="04-signatures">
+    <main>
+      <h1>Digital signatures</h1>
+      <p class="lede">Combine a hash with a private key and you get a digital signature: a small piece of data that proves a particular key holder approved particular bytes, and that those bytes haven’t changed since.</p>
+
+      <div class="objectives">
+        <h2>By the end of this chapter you will be able to</h2>
+        <ul>
+          <li>Describe the sign and verify procedures step by step.</li>
+          <li>Explain why signatures are computed over hashes.</li>
+          <li>State precisely what a valid signature does, and does not, prove.</li>
+          <li>Explain the “which public key?” problem that motivates certificates.</li>
+        </ul>
+      </div>
+
+      <h2>The recipe</h2>
+      <p>Every modern signature scheme, including the ECDSA used by C2PA, follows the same shape:</p>
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-title">Signing (by the key owner)</div>
+          <ol>
+            <li>Take the message bytes <code>M</code>.</li>
+            <li>Compute <code>h = SHA-256(M)</code>.</li>
+            <li>Combine <code>h</code> with the <span class="priv">private key</span> using the signing algorithm → signature <code>S</code>.</li>
+            <li>Publish <code>M</code> and <code>S</code> together.</li>
+          </ol>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Verifying (by anyone)</div>
+          <ol>
+            <li>Receive <code>M′</code> and <code>S</code> (M′ may or may not equal M).</li>
+            <li>Compute <code>h′ = SHA-256(M′)</code>.</li>
+            <li>Run the verification algorithm on <code>h′</code>, <code>S</code> and the <span class="pub">public key</span>.</li>
+            <li>It outputs <b>valid</b> or <b>invalid</b>. Nothing in between.</li>
+          </ol>
+        </div>
+      </div>
+      <p>
+        Why hash first? Signature mathematics works on numbers of a fixed size (256 bits for P-256). Hashing turns a message of
+        any size into exactly that size, and thanks to collision resistance, signing the hash is as good as signing the message.
+        Change any bit of <code>M</code> and <code>h′</code> differs from <code>h</code>, so the signature no longer fits.
+      </p>
+      <p>
+        In the toy RSA demo in chapter 3, “signing” was <code>s = m<sup>d</sup> mod n</code> and verifying was checking
+        <code>s<sup>e</sup> mod n = m</code>. ECDSA’s equations are different, but the logic is the same. Only the private key can produce a
+        value that passes a check anyone can run with the public key.
+      </p>
+
+      <h2>Try it</h2>
+      <p>
+        Alice and Mallory each have a freshly generated P-256 key pair. Alice signs a message. On the right, you are the
+        verifier. Edit the message, edit the signature, check against the wrong public key, or let Mallory try to forge.
+      </p>
+
+      <div data-widget="sign"></div>
+
+      <p>Experiments worth doing:</p>
+      <ul>
+        <li>Add a single space to the received message. It becomes invalid, because the hash changed.</li>
+        <li>Change one hex digit of the signature. Invalid.</li>
+        <li>Switch the public key to Mallory’s. Invalid: this signature was not made by her key.</li>
+        <li>Click “Let Mallory try to forge”. She signs a <em>modified</em> message with <em>her</em> key, but you are checking
+          against Alice’s key, so it fails.</li>
+        <li>Click “Sign” twice. ECDSA signatures include a fresh random value (the nonce <code>k</code>), so each signature differs, and
+          all of them verify. (Ed25519 derives the nonce deterministically instead; both approaches are secure.)</li>
+      </ul>
+
+      <div class="callout warn">
+        <div class="callout-title">Real-world failure: nonce reuse</div>
+        <p>
+          If an ECDSA signer ever uses the same nonce <code>k</code> for two different messages, anyone can compute their private key
+          from the two signatures with simple algebra. This happened to Sony’s PlayStation 3 code-signing key in 2010. Good
+          cryptographic libraries make this mistake impossible, which is one reason never to implement signatures yourself.
+        </p>
+      </div>
+
+      <h2>What a valid signature proves</h2>
+      <p>When verification succeeds, you know exactly two things:</p>
+      <ol>
+        <li><b>Integrity:</b> the bytes you have are bit-for-bit identical to the bytes that were signed.</li>
+        <li><b>Key possession:</b> the signature was produced by someone holding the private key that matches the public key you used.</li>
+      </ol>
+      <p>Hidden inside the second point is a consequence called <b>non-repudiation</b>. If only Alice has her private key, she can’t later
+        convincingly deny signing. This is exactly what symmetric keys couldn’t give us.</p>
+
+      <h2>What it does not prove</h2>
+      <ul>
+        <li><b>Not truth.</b> Alice can sign “the moon is made of cheese”. The signature proves Alice’s key signed it, not that it’s correct.</li>
+        <li><b>Not intent or circumstance.</b> If Alice’s key was stolen, the thief’s signatures verify perfectly.</li>
+        <li><b>Not identity, on its own.</b> This is the big one. Verification tells you a signature matches <em>a public key</em>. It
+          says nothing about <em>whose</em> key that is.</li>
+      </ul>
+
+      <h2>The “which public key?” problem</h2>
+      <p>
+        Suppose a photo arrives with a signature and a public key attached, and a note saying “this is Reuters’ public key”. The
+        signature verifies. Have you learned that Reuters signed it?
+      </p>
+      <p>
+        No. Mallory can generate her own key pair, sign anything, attach <em>her</em> public key, and label it “Reuters”. The maths
+        will check out perfectly. A bare public key is just a big number with no name attached.
+      </p>
+      <p>
+        You could keep a list of every legitimate public key in the world, but there are billions of devices and apps, and keys change.
+        What we need is a scalable way for a few parties you already trust to vouch for other people’s keys. That is a
+        <b>certificate</b>, and it is the subject of the next chapter.
+      </p>
+
+      <div class="callout key">
+        <div class="callout-title">Key idea</div>
+        <p>
+          Signature = hash + private key. Verification = hash + public key + signature → yes/no. A valid signature binds <em>bytes</em>
+          to <em>a key</em>. Binding a key to <em>a name</em> takes a certificate.
+        </p>
+      </div>
+
+      <div data-widget="quiz" data-quiz="04-signatures"></div>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Provenance Chains · Content Credentials</title>
+    <script type="module" crossorigin src="/c2pa/assets/main-DJhQTbU5.js"></script>
+    <link rel="stylesheet" crossorigin href="/c2pa/assets/main-BeFfSfFm.css">
+  </head>
+  <body data-chapter="09-provenance">
+    <main>
+      <h1>Ingredients and provenance chains</h1>
+      <p class="lede">Real content passes through many hands: a camera, an editor, a compositing tool, a publisher. C2PA records each step as its own signed manifest, linked to the previous ones.</p>
+
+      <div class="objectives">
+        <h2>By the end of this chapter you will be able to</h2>
+        <ul>
+          <li>Explain how ingredient assertions link manifests into a provenance graph.</li>
+          <li>Distinguish parentOf, componentOf and inputTo relationships.</li>
+          <li>Explain redaction, and why C2PA lets you remove some information.</li>
+          <li>Explain metadata stripping, and how soft bindings and manifest repositories help.</li>
+        </ul>
+      </div>
+
+      <h2>Every tool signs only its own step</h2>
+      <p>
+        A key design rule: <b>a claim generator never alters or re-signs another generator’s manifest</b>. When PhotoApp edits a photo from
+        a camera, it can’t sign on the camera’s behalf, and it doesn’t need to. Instead it:
+      </p>
+      <ol>
+        <li>keeps the camera’s manifest, unchanged, in the manifest store;</li>
+        <li>validates it, and records the result;</li>
+        <li>adds an <b>ingredient assertion</b> pointing to that manifest <em>with its hash</em>;</li>
+        <li>adds an actions assertion (<code>c2pa.opened</code> the ingredient, then whatever edits were made);</li>
+        <li>adds a hard binding for the <em>new</em> content, and signs its <em>own</em> claim.</li>
+      </ol>
+      <p>
+        The new manifest becomes the active manifest. The result is a <b>graph</b>: the active manifest at the top, with arrows down to its
+        ingredients’ manifests, and from them to their ingredients, back to the moment of capture or creation.
+      </p>
+
+      <h2>Each hard binding describes its own moment</h2>
+      <p>
+        There’s an obvious puzzle here. The camera’s manifest contains a hard binding: the hash of the pixels it captured. PhotoApp then
+        changes those pixels. Surely the camera’s hard binding no longer matches, and the file should fail validation?
+      </p>
+      <p>
+        It would, if validators checked it against the current file, but they don’t. Each manifest’s hard binding describes the content
+        <em>as it was when that manifest was signed</em>. Validation treats the two kinds of manifest differently:
+      </p>
+      <ul>
+        <li><b>The active manifest</b> (the newest one) is checked completely, including its hard binding against the bytes you are holding.
+          That is what proves this file is exactly what its last signer produced.</li>
+        <li><b>Ingredient manifests</b> are checked for everything <em>except</em> their hard binding: signature, certificate chain,
+          time-stamp, and the hashes of their assertions. The C2PA specification says so explicitly: hard binding assertions “cannot be
+          validated for ingredients”, because the earlier version of the content is no longer there to hash.</li>
+      </ul>
+      <p>
+        So who checked the camera’s hard binding? <b>PhotoApp did, at the moment it opened the camera’s file.</b> At that point the
+        original pixels were still available. PhotoApp validated the camera manifest completely and wrote the outcome into the
+        ingredient assertion’s <code>validationResults</code>. It also recorded the hash of the camera’s manifest, so nobody can later
+        swap in a different one. A later validator re-checks everything it still can, and compares its findings with the recorded
+        results.
+      </p>
+      <p>
+        The chain therefore holds together link by link. The camera vouches for the capture. PhotoApp vouches that it opened a file
+        carrying that valid camera manifest, and for the edited pixels it produced. The active manifest’s hard binding proves you hold
+        exactly those pixels.
+      </p>
+
+      <h2>Relationships</h2>
+      <ul>
+        <li><b><code>parentOf</code></b>: the ingredient is the asset being edited. There can be at most one parent.</li>
+        <li><b><code>componentOf</code></b>: the ingredient was placed into the asset (a logo, a second photo, an AI-generated element).</li>
+        <li><b><code>inputTo</code></b>: the ingredient was used to produce the asset without being part of it, for example a reference image given to an AI model.</li>
+      </ul>
+
+      <h2>Try it: grow a chain</h2>
+      <p>
+        Follow a photo through capture, editing, compositing with an AI-generated sky, and publication. Each step is performed by a different
+        claim generator with its own certificate.
+      </p>
+
+      <div data-widget="provenance-graph"></div>
+
+      <h3>Reading the graph</h3>
+      <p>
+        At the end, the active manifest (top) says PhotoApp opened “harbour-edit.jpg” and placed “sky.png” into it. Following the
+        <code>componentOf</code> link shows the sky’s own manifest, signed by the AI service, with <code>digitalSourceType: trainedAlgorithmicMedia</code>.
+        Following <code>parentOf</code> leads back through the edit to the camera capture. Each link carries a hash, so a validator can confirm
+        that every ingredient manifest is exactly the one that was referenced.
+      </p>
+      <p>
+        This is what makes C2PA useful for transparency about AI. A composite can be honest about which parts are AI-generated, and the
+        claim comes from the AI service itself, not just from whoever made the final image.
+      </p>
+
+      <h2>Could an editor lie about what it did?</h2>
+      <p>
+        Yes. A tool could crop a photo and say “cropped”. It could just as easily paint a fire onto a mountain, or substitute a
+        different photo altogether, and <em>still</em> say only “cropped”. Every cryptographic check would pass. The editor’s signature
+        is genuine, its hard binding matches the pixels it produced, and the camera’s manifest is untouched. Turn on the dishonest
+        option in the demo above to see it.
+      </p>
+      <p>
+        This is a fundamental limit, not a bug. The actions assertion is a <b>statement made by the signer</b>, and a signature proves who
+        made a statement, not that the statement is true. The specification is explicit that assertions in a claim are attributed to its
+        signer, because the trust model is rooted in trust in the signer. Nothing in the file can prove what happened inside someone
+        else’s software. What C2PA offers instead is a set of defences:
+      </p>
+      <ul>
+        <li><b>The lie is signed.</b> The false claim is permanently attributable to the editor’s certificate. A lie can’t be anonymous
+          and can’t later be denied.</li>
+        <li><b>Trust lists and conformance.</b> Validators only show a signer as trusted if its certificate chains to the
+          <a href="https://opensource.contentauthenticity.org/docs/conformance/trust-lists" rel="noopener">C2PA trust list</a>. Generator
+          products get those certificates through the
+          <a href="https://opensource.contentauthenticity.org/docs/conformance/" rel="noopener">C2PA conformance program</a>.
+          A product caught misrepresenting edits can have its certificate revoked (chapter 5). In the program’s first phase, conformance
+          is largely self-asserted, so this is a deterrent rather than a guarantee.</li>
+        <li><b>Thumbnails.</b> Manifests can carry signed thumbnails of the content as it was at each step (<code>c2pa.thumbnail.claim</code>,
+          <code>c2pa.thumbnail.ingredient</code>). A viewer such as the Verify tool can show the camera’s thumbnail next to the image you’re
+          looking at. A “crop” that added a fire, or replaced the scene, is then plain to see. The graph in the demo shows these thumbnails.</li>
+        <li><b>The original still exists.</b> The camera’s manifest records the hash of the original capture. Whoever holds that file, such
+          as the photographer or a newsroom archive, can prove what was really captured, and that the published version differs.</li>
+        <li><b>Your own policy.</b> You decide which signers you believe. A newsroom might accept edits only from its own tools, or insist
+          on the original capture for anything contentious.</li>
+      </ul>
+      <div class="callout key">
+        <div class="callout-title">The weakest link sets the trust level</div>
+        <p>
+          A provenance chain is only as trustworthy as its least trustworthy signer. A genuine camera capture followed by an edit from
+          an unknown tool tells you that the original was real and that <em>someone</em> changed it. It does not tell you that the change
+          was as minor as claimed. Read every link with the question “do I trust <em>this</em> signer to describe its step honestly?”
+        </p>
+      </div>
+
+      <h2>Redaction: removing information on purpose</h2>
+      <p>
+        Sometimes earlier provenance contains something that shouldn’t travel further: the GPS coordinates of a journalist’s safe house, or a
+        source’s name. Because the earlier manifest is signed, you can’t edit it. But C2PA allows a later claim generator to <b>redact</b> specific
+        assertions from ingredient manifests:
+      </p>
+      <ul>
+        <li>The assertion’s contents are removed from the ingredient’s manifest (its box is zeroed or dropped).</li>
+        <li>The new claim lists the removed assertion in <code>redacted_assertions</code> and records a <code>c2pa.redacted</code> action.</li>
+        <li>Validators then know the gap is deliberate and accounted for. They won’t report the missing assertion as tampering, and they can
+          show that something was redacted, and by whom.</li>
+      </ul>
+      <p>Hard bindings can’t be redacted, since that would sever the link to the content.</p>
+
+      <h2>The stripping problem</h2>
+      <p>
+        As the demo showed, if a platform strips metadata, the manifest store goes with it. Nothing inside the file is left to say there
+        ever were credentials. This is the most significant practical limitation of any embedded-provenance system. C2PA attacks it from
+        several directions:
+      </p>
+      <ul>
+        <li><b>Adoption by platforms</b>: preserving (and adding to) Content Credentials instead of stripping them.</li>
+        <li><b>Soft bindings</b>: a <code>c2pa.soft-binding</code> assertion records a watermark or fingerprint. If the manifest is lost, the
+          watermark can still be read from the pixels, or the fingerprint recomputed, and used to look up the manifest.</li>
+        <li><b>Manifest repositories</b>: cloud services where manifests are stored and can be found by soft-binding lookup.</li>
+        <li><b>Remote manifests</b>: the asset may carry only a URL to its manifest store, which is smaller and more likely to survive.</li>
+      </ul>
+      <div class="callout warn">
+        <div class="callout-title">Recovered ≠ byte-exact</div>
+        <p>
+          A recovered manifest describes the asset as it was when signed. If the file has since been re-compressed, its hard binding won’t
+          match the bytes you hold, so you’ve learned the history of a closely related original, not proven these exact bytes. Soft bindings
+          trade some certainty for durability.
+        </p>
+      </div>
+
+      <h2>Ingredients without credentials</h2>
+      <p>
+        An ingredient may have no manifest at all: an old photo, a stock image without credentials. It is still recorded (title, format,
+        maybe a thumbnail and a hash), but its provenance is unknown. The chain honestly stops there. Partial provenance is still
+        far better than none, as long as the viewer can see where the verifiable part ends.
+      </p>
+
+      <div data-widget="quiz" data-quiz="09-provenance"></div>
+    </main>
+  </body>
+</html>

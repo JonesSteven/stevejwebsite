@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Time-stamps · Content Credentials</title>
+    <script type="module" crossorigin src="/c2pa/assets/main-DJhQTbU5.js"></script>
+    <link rel="stylesheet" crossorigin href="/c2pa/assets/main-BeFfSfFm.css">
+  </head>
+  <body data-chapter="06-timestamps">
+    <main>
+      <h1>Time-stamps and the long life of a signature</h1>
+      <p class="lede">Certificates expire after a year or two. Photos are meant to stay credible for decades. A trusted time-stamp bridges that gap.</p>
+
+      <div class="objectives">
+        <h2>By the end of this chapter you will be able to</h2>
+        <ul>
+          <li>Explain why a signature without a trusted time-stamp becomes unverifiable once its certificate expires.</li>
+          <li>Describe what an RFC 3161 Time-Stamp Authority signs, and what it never sees.</li>
+          <li>Explain how time-stamps interact with revocation.</li>
+        </ul>
+      </div>
+
+      <h2>The expiry problem</h2>
+      <p>
+        Certificates have short lifetimes on purpose: the shorter a key is in use, the less damage a leak can do. But think about what a
+        validator must ask when checking a C2PA manifest years later:
+      </p>
+      <blockquote class="analogy">“Was the signer’s certificate valid at the moment this signature was made?”</blockquote>
+      <p>
+        The validator can’t take the signer’s word for the time. Any timestamp the signer writes into the data was chosen by the
+        signer. Someone who stole an expired key could simply write an old date. Without independent proof of <em>when</em>, the only
+        safe choice is to check the certificate against <em>now</em>. Once the certificate expires, the signature becomes unverifiable.
+      </p>
+
+      <h2>Time-Stamp Authorities</h2>
+      <p>
+        A <b>Time-Stamp Authority (TSA)</b> is a trusted third party with an accurate clock and its own certificate (with the
+        <code>timeStamping</code> extended key usage). The protocol, defined in <b>RFC 3161</b>, is simple:
+      </p>
+      <ol>
+        <li>The signer computes a hash of their signature, called the <b>message imprint</b>, and sends only that hash to the TSA.</li>
+        <li>The TSA builds a <b>time-stamp token</b> containing the imprint and its current time (<code>genTime</code>), and signs it
+          with its private key.</li>
+        <li>The signer embeds the token alongside their signature.</li>
+      </ol>
+      <p>A validator later checks that:</p>
+      <ul>
+        <li>the TSA’s signature on the token is valid and its certificate chains to a trusted TSA root, and</li>
+        <li>the imprint in the token equals the hash of <em>this</em> signature.</li>
+      </ul>
+      <p>
+        If both hold, the validator knows the signature existed <b>no later than</b> <code>genTime</code>. It then checks the signer’s
+        certificate against <code>genTime</code> instead of “now”. The TSA never sees the photo, the manifest or the private key. It only
+        sees a 32-byte hash.
+      </p>
+
+      <div data-widget="timestamp"></div>
+
+      <p>Things to try:</p>
+      <ul>
+        <li>With the time-stamp on, drag “validated” far into the future. It stays valid.</li>
+        <li>Turn the time-stamp off. The signature fails as soon as the validation date passes the certificate’s expiry.</li>
+        <li>Turn on revocation. With a time-stamp, signatures made <em>before</em> the revocation date remain acceptable, and those made
+          after are rejected. Without one, the validator can’t tell, so it rejects them all after revocation.</li>
+        <li>Move “signed” before the certificate’s start date. Rejected either way.</li>
+      </ul>
+
+      <div class="callout warn">
+        <div class="callout-title">A subtlety about revocation</div>
+        <p>
+          Real-world policy is a bit more nuanced. A revocation for “key compromise” may record an estimated compromise date, and
+          validators may apply different policies to different revocation reasons. The principle the demo shows, that a trusted time-stamp
+          lets you separate signatures made before a problem from those made after, is the important part.
+        </p>
+      </div>
+
+      <h2>Time-stamps in C2PA</h2>
+      <p>
+        C2PA recommends that claim generators obtain an RFC 3161 time-stamp for every claim signature and embed it in the COSE
+        signature structure. Validators report outcomes such as:
+      </p>
+      <ul>
+        <li><code>timeStamp.validated</code>: the token is intact and covers this signature.</li>
+        <li><code>timeStamp.trusted</code>: the TSA chains to a trusted TSA root.</li>
+        <li><code>timeStamp.mismatch</code>: the token does not match this signature.</li>
+        <li><code>claimSignature.insideValidity</code> / <code>claimSignature.outsideValidity</code>: whether the signing certificate
+          was valid at the established signing time.</li>
+      </ul>
+      <p>
+        One more detail you’ll exploit in the Tamper Lab. In COSE, the time-stamp is placed in the <em>unprotected</em> header,
+        outside the bytes the claim generator signs. Removing it therefore doesn’t break the claim signature. It just takes away the
+        proof of time, which only matters once the certificate has expired.
+      </p>
+
+      <h2>Part II recap</h2>
+      <p>You now have every cryptographic tool C2PA uses:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tool</th><th>Answers the question</th></tr></thead>
+          <tbody>
+            <tr><td>Hash</td><td>Is this exactly the same data?</td></tr>
+            <tr><td>Signature</td><td>Did the holder of this key approve exactly this data?</td></tr>
+            <tr><td>Certificate chain + trust store</td><td>Whose key is it, according to someone I trust?</td></tr>
+            <tr><td>Revocation</td><td>Has that endorsement been withdrawn?</td></tr>
+            <tr><td>Time-stamp</td><td>When was the signature made, according to someone I trust?</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Part III assembles them into a C2PA manifest.</p>
+
+      <div data-widget="quiz" data-quiz="06-timestamps"></div>
+    </main>
+  </body>
+</html>

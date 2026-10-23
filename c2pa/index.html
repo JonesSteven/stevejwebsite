@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Content Credentials, From Zero</title>
+    <meta name="description" content="An interactive tutorial on C2PA Content Credentials and CAWG identity assertions, starting from hashing, keys and signatures." />
+    <script type="module" crossorigin src="/c2pa/assets/index-MunbuXt5.js"></script>
+    <link rel="modulepreload" crossorigin href="/c2pa/assets/main-DJhQTbU5.js">
+    <link rel="stylesheet" crossorigin href="/c2pa/assets/main-BeFfSfFm.css">
+  </head>
+  <body data-chapter="">
+    <main>
+      <section class="hero">
+        <h1>Content Credentials, from zero</h1>
+        <div class="callout warn" role="note">
+          <div class="callout-title">Unofficial resource</div>
+          <p>
+            This course is an <b>independent, unofficial</b> learning resource. It has <b>no association or relationship</b> with
+            the Coalition for Content Provenance and Authenticity (C2PA), the Content Authenticity Initiative (CAI), the Creator
+            Assertions Working Group (CAWG), the Decentralized Identity Foundation (DIF), or any of their members. None of them
+            wrote, reviewed or endorse it. It may contain errors or fall behind the current specifications. For anything that
+            matters, rely on the <a href="#official-sources">official sources</a>.
+          </p>
+        </div>
+        <p class="lede">
+          An interactive course on <b>C2PA</b>, the open standard behind “Content Credentials”, and the <b>CAWG</b>
+          extensions that let real people and organisations attach verifiable identity to what they make.
+        </p>
+        <p>
+          No background is assumed. Before C2PA itself, you will build a working understanding of the cryptography it stands on:
+          hash functions, public and private keys, digital signatures, certificates, chains of trust and time-stamps.
+          Every concept comes with a hands-on demo running <b>real cryptography in your browser</b>. In chapter 10 you will
+          inspect real Content Credentials with the official C2PA SDK.
+        </p>
+        <div class="callout key">
+          <div class="callout-title">How to use this course</div>
+          <p>
+            Work through the chapters in order. Each one builds on the last. Play with every demo: they are the fastest way to
+            build intuition. Each chapter ends with a short quiz that explains every answer. Your progress is saved only in
+            this browser’s local storage, on your own device. Nothing is sent to a server, there are no cookies, and you can
+            reset it at any time with the button below. Total time: roughly 7 hours, easily split across several sittings.
+          </p>
+        </div>
+        <p><a class="btn primary" href="chapters/01-problem.html" style="text-decoration:none;display:inline-block">Start chapter 1 →</a> <span class="small muted" id="progress-note"></span></p>
+      </section>
+      <div id="toc"></div>
+      <hr />
+      <section id="official-sources">
+        <h2>Official sources</h2>
+        <p>These are the authoritative places to learn about Content Credentials. This course is not affiliated with any of them.</p>
+        <ul class="official-links">
+          <li><a href="https://c2pa.org" rel="noopener">C2PA, the Coalition for Content Provenance and Authenticity</a>: the standards body behind the specification.</li>
+          <li><a href="https://spec.c2pa.org" rel="noopener">C2PA specifications</a>: the technical specification, explainer and guidance documents.</li>
+          <li><a href="https://cawg.io" rel="noopener">CAWG, the Creator Assertions Working Group</a>: the identity, training and data mining, and metadata assertion specifications.</li>
+          <li><a href="https://identity.foundation" rel="noopener">DIF, the Decentralized Identity Foundation</a>: the home of the CAWG working group.</li>
+          <li><a href="https://contentauthenticity.org" rel="noopener">Content Authenticity Initiative</a>: community and adoption of Content Credentials.</li>
+          <li><a href="https://opensource.contentauthenticity.org" rel="noopener">CAI open-source documentation</a>: the official C2PA SDKs and tools, including the one used in chapter 10.</li>
+          <li><a href="https://contentcredentials.org" rel="noopener">Content Credentials</a> and the <a href="https://verify.contentauthenticity.org" rel="noopener">Verify tool</a>: check the credentials on a real file.</li>
+        </ul>
+      </section>
+      <p class="small muted">
+        Spec versions referenced: C2PA Technical Specification 2.x (2.4, April 2026); CAWG Identity Assertion 1.3 (DIF ratified,
+        August 2026); CAWG Training and Data Mining Assertion 1.1 (DIF ratified, May 2025). The simulated structures in chapters
+        7–12 are simplified for teaching (JSON instead of CBOR/JUMBF), but the hashes and signatures are real. Sample images in
+        chapter 10 are C2PA public test files, CC BY-SA 4.0.
+      </p>
+    </main>
+  </body>
+</html>

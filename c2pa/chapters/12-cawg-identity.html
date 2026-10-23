@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>The CAWG Identity Assertion · Content Credentials</title>
+    <script type="module" crossorigin src="/c2pa/assets/main-DJhQTbU5.js"></script>
+    <link rel="stylesheet" crossorigin href="/c2pa/assets/main-BeFfSfFm.css">
+  </head>
+  <body data-chapter="12-cawg-identity">
+    <main>
+      <h1>The CAWG identity assertion</h1>
+      <p class="lede">The identity assertion lets a person or organisation sign their own statement about an asset, bound so tightly to the C2PA manifest and content that it can’t be lifted off and reused.</p>
+
+      <div class="objectives">
+        <h2>By the end of this chapter you will be able to</h2>
+        <ul>
+          <li>Describe the structure of <code>cawg.identity</code>: <code>signer_payload</code>, <code>signature</code>, padding.</li>
+          <li>Explain referenced assertions, and why the hard binding must be one of them.</li>
+          <li>Explain the two credential types: X.509 certificates and identity claims aggregation (verifiable credentials).</li>
+          <li>Walk through validation and interpret <code>cawg.identity.*</code> status codes.</li>
+        </ul>
+      </div>
+
+      <div class="callout spec">
+        <div class="callout-title">Spec status</div>
+        <p>
+          Based on <b>CAWG Identity Assertion 1.3</b>, a DIF Ratified Specification (17 August 2026). Version 1.2 (December 2025) added a trust
+          model for X.509 certificates. Version 1.3 removed the optional <code>expected_partial_claim</code>, <code>expected_claim_generator</code>
+          and <code>expected_countersigners</code> fields, and gave X.509 validation its own <code>cawg.x509.*</code> status codes. You may still meet
+          assertions produced under earlier versions. SDK support continues to evolve, and further extensions are in draft, so check
+          <code>cawg.io</code> for the latest.
+        </p>
+      </div>
+
+      <h2>Vocabulary</h2>
+      <ul>
+        <li><b>Named actor</b>: the person or organisation the assertion is about.</li>
+        <li><b>Credential holder</b>: the party that controls the credential (key or verified identity) used to sign. Usually the same as the named actor.</li>
+        <li><b>Identity assertion generator</b>: the software that helps the credential holder produce the assertion (often built into the same app as the claim generator).</li>
+      </ul>
+
+      <h2>Structure</h2>
+      <p>An identity assertion has the label <code>cawg.identity</code> (multiple instances are allowed, such as <code>cawg.identity__1</code>, one per named actor). Its CBOR schema, simplified, is:</p>
+      <pre class="code"><code>identity = {
+  "signer_payload": {                         ; ← what the credential holder signs
+    "referenced_assertions": [ hashed-uri, … ],  ; required: which assertions they vouch for
+    "sig_type": "cawg.x509.cose"               ; required: kind of credential/signature
+              / "cawg.identity_claims_aggregation",
+    ? "role": [ "cawg.creator", … ]              ; optional: their relationship to the asset
+  },
+  "signature": bstr,   ; the credential holder's signature over signer_payload
+  "pad1": bstr,        ; zero bytes, used to reserve space
+  ? "pad2": bstr
+}</code></pre>
+
+      <h3>Referenced assertions: what the named actor vouches for</h3>
+      <p>
+        <code>referenced_assertions</code> is a list of hashed URIs, the same <code>{url, alg, hash}</code> structure the claim uses. The credential
+        holder chooses which assertions they’re putting their name to: perhaps the actions and some metadata, but not a location they
+        don’t want to vouch for. Two rules are essential:
+      </p>
+      <ul>
+        <li>Every referenced assertion must match, by URL, alg and hash, an entry in the C2PA claim the identity assertion appears in (or in an
+          ingredient’s claim). Otherwise: <code>cawg.identity.assertion.mismatch</code>.</li>
+        <li>The list <b>must include the hard-binding assertion</b>. Otherwise: <code>cawg.identity.hard_binding_missing</code>. Without it, the
+          named actor’s signature wouldn’t be tied to any particular content and could be copied onto anything.</li>
+      </ul>
+
+      <h3>Roles</h3>
+      <p>
+        The optional <code>role</code> array states how the named actor relates to the asset. Defined values are <code>cawg.creator</code>,
+        <code>cawg.contributor</code>, <code>cawg.editor</code>, <code>cawg.producer</code>, <code>cawg.publisher</code>,
+        <code>cawg.sponsor</code> and <code>cawg.translator</code>. Custom roles are possible too.
+      </p>
+
+      <h3>Why the padding?</h3>
+      <p>
+        There’s a sequencing puzzle. The identity assertion is <em>inside</em> the claim, so it must exist before the claim is signed. But its contents
+        (especially the signature) have a size that isn’t known until signing happens, perhaps remotely on the creator’s device. The
+        generator reserves space up front and fills the remainder with zero bytes (<code>pad1</code>, <code>pad2</code>), so the final assertion fits
+        exactly. Validators check the padding really is all zeros (<code>cawg.identity.pad.invalid</code>), so it can’t be used to smuggle data.
+      </p>
+
+      <h2>Two signatures, tightly woven</h2>
+      <div class="math">        credential holder (Jane)                   claim generator (PhotoApp)
+                │                                           │
+   signs signer_payload ───┐                                │
+   (refs: hard binding,    │   cawg.identity assertion      │
+    actions, …; role)      └──▶ [payload + signature] ──hash──▶ claim.created_assertions
+                                                            │
+                                                  signs the claim (COSE)</div>
+      <ul>
+        <li>Jane’s signature covers the <b>hashes of the assertions</b> she referenced, including the hard binding, so it covers the content.</li>
+        <li>PhotoApp’s claim lists the <b>hash of the identity assertion</b>, so the claim signature also covers Jane’s signature.</li>
+        <li>Changing anything breaks at least one signature. Copying Jane’s assertion into another manifest fails because her referenced hashes won’t
+          appear in the new claim.</li>
+      </ul>
+
+      <h2>Try it</h2>
+      <p>
+        Jane Photographer has a certificate from an identity CA, separate from the C2PA trust list. PhotoApp is the claim generator. Choose what Jane
+        vouches for and her role, sign, then attack.
+      </p>
+
+      <div data-widget="cawg-identity"></div>
+
+      <p>Experiments:</p>
+      <ul>
+        <li>Untick the hard binding and re-sign → <code>cawg.identity.hard_binding_missing</code>.</li>
+        <li>“Tamper with role”: Jane’s signature fails (<code>cawg.x509.signature.mismatch</code>), and so does the claim’s hashed URI for <code>cawg.identity</code>. Two independent alarms.</li>
+        <li>“Reuse on another photo”: the new manifest’s C2PA signature is perfect, but Jane’s referenced hard binding isn’t in the new claim →
+          <code>cawg.identity.assertion.mismatch</code>.</li>
+        <li>Untick “Validator trusts Example Identity CA”. The signature still verifies, but the chain has no trust anchor →
+          <code>cawg.x509.credential.untrusted</code>, so <code>cawg.identity.trusted</code> can’t be issued.</li>
+      </ul>
+
+      <h2>Credential type 1: X.509 certificates (<code>cawg.x509.cose</code>)</h2>
+      <p>
+        The simplest option, and the one the demo uses. The credential holder has an X.509 certificate and private key, just like a claim
+        generator. The <code>signature</code> field holds a COSE_Sign1 signature over the CBOR-encoded <code>signer_payload</code>, with the
+        certificate chain in its header and optionally a time-stamp. Validation follows C2PA’s signature, time-stamp and credential-checking
+        procedure, adapted for the identity assertion. Since 1.3 it reports its own codes: <code>cawg.x509.signature.validated</code> /
+        <code>cawg.x509.signature.mismatch</code>, <code>cawg.x509.credential.trusted</code> / <code>cawg.x509.credential.untrusted</code>,
+        <code>cawg.x509.time_stamp.*</code>, <code>cawg.x509.ocsp.*</code> and so on.
+      </p>
+      <p>
+        Which certificates count as “trusted” for identity? Since 1.2, the spec defines a trust model. A validator maintains accepted Extended Key Usages
+        (which must include <code>id-kp-documentSigning</code>), accepted certificate policies, and trust anchors. There is also an interim provision,
+        for assertions generated on or before 31 March 2027, that accepts certain organisation-validated S/MIME-style certificates. This suits
+        organisations, such as news agencies, that already run PKI or can buy certificates.
+      </p>
+
+      <h2>Credential type 2: identity claims aggregation (<code>cawg.identity_claims_aggregation</code>)</h2>
+      <p>
+        Most individual creators don’t have X.509 certificates. They have verified social media accounts, a personal website, perhaps an
+        ID-verified account with some service. These signals have problems as lasting evidence: each platform presents them differently, they can’t
+        sign anything on the person’s behalf, and they’re designed for checking <em>now</em>, not for checking a photo’s credit five years later.
+      </p>
+      <p>
+        <b>Identity claims aggregation (ICA)</b> solves this with a trusted intermediary, the <b>identity claims aggregator</b>. It:
+      </p>
+      <ol>
+        <li>verifies the creator’s identity signals (logs in to their social accounts, checks their website, runs a document check…), and</li>
+        <li>when the creator makes content, issues a <b>W3C Verifiable Credential</b> restating those verified identities <em>and</em> binding them to
+          this asset’s <code>signer_payload</code>, signed with the aggregator’s own key.</li>
+      </ol>
+      <p>Simplified, the credential looks like this:</p>
+      <pre class="code"><code>{
+  "@context": ["https://www.w3.org/ns/credentials/v2", "https://cawg.io/identity/1.1/ica/context/"],
+  "type": ["VerifiableCredential", "IdentityClaimsAggregationCredential"],
+  "issuer": "did:web:aggregator.example",
+  "validFrom": "2026-05-01T12:00:00Z",
+  "credentialSubject": {
+    "id": "did:example:jane",
+    "verifiedIdentities": [
+      { "type": "cawg.social_media", "username": "janephoto", "uri": "https://social.example/@janephoto",
+        "provider": { "id": "https://social.example", "name": "Social Example" }, "verifiedAt": "2026-04-02T09:00:00Z" },
+      { "type": "cawg.web_site", "uri": "https://janephotographer.example", "verifiedAt": "2026-04-02T09:05:00Z",
+        "provider": { "id": "https://aggregator.example", "name": "Aggregator" } },
+      { "type": "cawg.document_verification", "name": "Jane Q. Photographer", "verifiedAt": "2026-03-30T14:00:00Z",
+        "provider": { "id": "https://idv.example", "name": "ID Vendor" } }
+    ],
+    "c2paAsset": { "referenced_assertions": [ … ], "sig_type": "cawg.identity_claims_aggregation", "role": ["cawg.creator"] }
+  }
+}</code></pre>
+      <p>Defined <code>verifiedIdentities</code> types include:</p>
+      <ul>
+        <li><code>cawg.document_verification</code>: government ID was checked (requires <code>name</code>);</li>
+        <li><code>cawg.web_site</code>: control of a web site was verified (requires <code>uri</code>);</li>
+        <li><code>cawg.affiliation</code>: membership of an organisation;</li>
+        <li><code>cawg.social_media</code>: control of a social account (requires <code>username</code>);</li>
+        <li><code>cawg.crypto_wallet</code>: control of a blockchain address (requires <code>address</code>).</li>
+      </ul>
+      <p>
+        <b>DIDs</b> (Decentralized Identifiers, such as <code>did:web:aggregator.example</code>) are a W3C standard for identifiers that resolve to a
+        document listing public keys. A validator resolves the aggregator’s DID to find the key that should verify the credential. If the DID can’t be
+        resolved, uses an unsupported method, or the signature fails, ICA-specific codes report it (<code>cawg.ica.did_unavailable</code>,
+        <code>cawg.ica.signature_mismatch</code>…). Trust then rests on whether the validator trusts <em>that aggregator</em>
+        (<code>cawg.ica.untrusted_issuer</code> otherwise).
+      </p>
+
+      <h2>Validating an identity assertion</h2>
+      <p>In outline, a validator:</p>
+      <ol>
+        <li>Checks the C2PA manifest itself (chapter 8). The identity assertion is only meaningful inside a valid manifest.</li>
+        <li>Parses <code>cawg.identity</code> (<code>cawg.identity.cbor.invalid</code> if malformed) and checks the padding.</li>
+        <li>Checks every referenced assertion appears in the claim (<code>cawg.identity.assertion.mismatch</code>), that none is duplicated
+          (<code>cawg.identity.assertion.duplicate</code>), and that the hard binding is included (<code>cawg.identity.hard_binding_missing</code>).</li>
+        <li>Dispatches on <code>sig_type</code> (<code>cawg.identity.sig_type.unknown</code> if unrecognised) and verifies the credential-specific signature,
+          time-stamp and revocation (<code>cawg.identity.credential_revoked</code>…).</li>
+        <li>Makes a trust decision about the named actor:
+          <ul>
+            <li><code>cawg.identity.trusted</code>: everything validated, and the named actor is trusted through a root of trust the consumer accepts.</li>
+            <li><code>cawg.identity.well-formed</code>: everything validated, but no root of trust could be identified for the named actor. For X.509
+              credentials, 1.3 treats a chain that can’t be verified as a failure (<code>cawg.x509.credential.untrusted</code>), so you’re more likely to see
+              this outcome with other credential types.</li>
+          </ul>
+        </li>
+      </ol>
+      <div class="callout key">
+        <div class="callout-title">Key idea</div>
+        <p>
+          The identity assertion is a second, independent signature from the <em>person</em>, woven into the <em>product’s</em> signature. Each
+          covers the other, and both reach the content through the hard binding. Remove the identity assertion and you have an ordinary C2PA
+          manifest. Forge it and the cryptography catches you.
+        </p>
+      </div>
+
+      <div class="callout warn">
+        <div class="callout-title">Naming rule</div>
+        <p>
+          The CAWG spec notes that “Content Credential” is a trademarked term referring to C2PA manifests, and it must not be used for identity
+          assertion signatures. It’s a small detail, but a sign of how carefully the two layers are kept distinct.
+        </p>
+      </div>
+
+      <div data-widget="quiz" data-quiz="12-cawg-identity"></div>
+    </main>
+  </body>
+</html>

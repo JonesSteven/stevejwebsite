@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Hash Functions · Content Credentials</title>
+    <script type="module" crossorigin src="/c2pa/assets/main-DJhQTbU5.js"></script>
+    <link rel="stylesheet" crossorigin href="/c2pa/assets/main-BeFfSfFm.css">
+  </head>
+  <body data-chapter="02-hashing">
+    <main>
+      <h1>Hash functions: digital fingerprints</h1>
+      <p class="lede">Hashing is the first building block. A hash turns data of any size into a short fingerprint that changes completely if even one bit of the data changes.</p>
+
+      <div class="objectives">
+        <h2>By the end of this chapter you will be able to</h2>
+        <ul>
+          <li>Explain what a cryptographic hash function is and what SHA-256 outputs.</li>
+          <li>Name and explain determinism, the avalanche effect, preimage resistance and collision resistance.</li>
+          <li>Explain why a hash can stand in for a large file, and why that matters for signatures.</li>
+        </ul>
+      </div>
+
+      <h2>First: everything is bytes</h2>
+      <p>
+        Computers store everything, including text, photos, video and this web page, as sequences of <b>bytes</b>. A byte is 8
+        <b>bits</b> (0s and 1s), so it can hold a number from 0 to 255. The letter “A” is stored as byte 65. A pixel in a
+        photo is typically three bytes: red, green and blue intensities. A 12-megapixel photo is roughly 36 million bytes
+        before compression.
+      </p>
+      <p>
+        We often write bytes in <b>hexadecimal</b> (base 16), using digits <code>0–9</code> and <code>a–f</code>. One hex
+        digit represents 4 bits, so one byte is exactly two hex digits: 65 becomes <code>41</code> and 255 becomes <code>ff</code>.
+        You’ll see a lot of hex in this course. Whenever you see a long string like <code>9f86d081…</code>, it’s just bytes written compactly.
+      </p>
+
+      <h2>What a hash function does</h2>
+      <p>
+        A <b>hash function</b> takes an input of any length and produces an output of a fixed length, called the
+        <b>hash</b> or <b>digest</b>. C2PA, like most modern systems, uses <b>SHA-256</b> (Secure Hash Algorithm, 256-bit
+        output). Whether you feed it one letter or a 4 GB video, you get back exactly 256 bits: 32 bytes, or 64 hex digits.
+      </p>
+      <p class="analogy">Think of a hash as a fingerprint for data. It is much smaller than the thing it identifies, the same thing always gives the same fingerprint, and you can’t rebuild the person from the fingerprint.</p>
+
+      <div data-widget="hash"></div>
+
+      <h2>The four properties that matter</h2>
+      <p>Not every function that squeezes data into a fixed size is useful for security. A <em>cryptographic</em> hash function must have all of these properties:</p>
+
+      <h3>1. Deterministic</h3>
+      <p>The same input always gives the same output, on any computer, forever. This is what lets someone else re-compute a hash and compare it with yours. In the demo, make the two inputs identical and watch the hashes match.</p>
+
+      <h3>2. The avalanche effect</h3>
+      <p>
+        A tiny change to the input (one character, one bit) produces an output that looks completely unrelated. About half of the
+        256 output bits flip, in an unpredictable pattern. In the demo, the two default inputs differ only by a full stop,
+        yet the bit grid lights up across the board. This means a hash gives <em>no clue</em> about how similar two inputs are. It only tells
+        you whether they are <em>exactly</em> equal.
+      </p>
+
+      <h3>3. Preimage resistance (one-way)</h3>
+      <p>
+        Given a hash, it must be infeasible to find <em>any</em> input that produces it. There is no “reverse SHA-256” button.
+        The only strategy is to guess inputs, hash them and compare, and the space of possible outputs is astronomically large:
+        2<sup>256</sup> ≈ 10<sup>77</sup>, close to the number of atoms in the observable universe. The demo below lets you feel
+        how quickly guessing becomes hopeless, even when you only need to match a few hex digits.
+      </p>
+
+      <div data-widget="hash-puzzle"></div>
+
+      <p>
+        Each extra hex digit you require makes the search 16 times longer on average. Matching all 64 digits would take every
+        computer on Earth far longer than the age of the universe. (Bitcoin “mining” is this same puzzle, deliberately
+        tuned to be hard.)
+      </p>
+
+      <h3>4. Collision resistance</h3>
+      <p>
+        It must be infeasible to find <em>two different inputs</em> that produce the same hash. Collisions must exist
+        mathematically, since there are infinitely many inputs and only 2<sup>256</sup> outputs. But nobody can find one. Because of the
+        “birthday paradox”, finding a collision takes about 2<sup>128</sup> attempts rather than 2<sup>256</sup>. That is still far beyond reach.
+      </p>
+      <div class="callout spec">
+        <div class="callout-title">History lesson</div>
+        <p>
+          Older hash functions lost these properties. Practical collisions were found for <b>MD5</b> (2004) and <b>SHA-1</b>
+          (2017), and both are now forbidden in security systems. This is why specifications like C2PA name the exact algorithms
+          allowed (SHA-256, SHA-384, SHA-512) and record which one was used next to each hash, so systems can move to stronger
+          algorithms later.
+        </p>
+      </div>
+
+      <h2>Hashing a whole file</h2>
+      <p>Files are bytes too, so they can be hashed. Choose any file below: a photo, a PDF, anything. Then flip a single bit in it.</p>
+
+      <div data-widget="hash-file"></div>
+
+      <p>
+        Try verifying it yourself. On macOS or Linux, run <code>shasum -a 256 yourfile.jpg</code> in a terminal. On Windows, run
+        <code>certutil -hashfile yourfile.jpg SHA256</code>. You’ll get the same 64 hex digits.
+      </p>
+
+      <h2>Why this matters for provenance</h2>
+      <p>Hashes give us two superpowers that C2PA uses everywhere:</p>
+      <ol>
+        <li>
+          <b>Tamper evidence.</b> If I record the hash of a photo today and you hash it tomorrow, matching hashes mean the
+          bytes are identical. A different hash means <em>something</em> changed, even one pixel. (Hashes can’t tell you
+          <em>what</em> changed. They can only tell you whether anything did.)
+        </li>
+        <li>
+          <b>Compact stand-ins.</b> Instead of handling a 30 MB photo, you can handle its 32-byte hash, and thanks to collision
+          resistance the hash is as good as the photo for checking identity. This matters because, as you’ll see, signatures are
+          always computed over <em>hashes</em>, never directly over huge files.
+        </li>
+      </ol>
+      <p>
+        C2PA chains hashes together. The manifest contains a hash of the content. A signed list contains the hashes of
+        each piece of the manifest. Tamper with anything and some hash in the chain stops matching.
+      </p>
+
+      <div class="callout key">
+        <div class="callout-title">Key idea</div>
+        <p>
+          A hash proves <em>sameness</em> but not <em>origin</em>. Anyone can compute a hash, including an attacker who
+          modifies a file and then hashes the modified version. To make a hash trustworthy, we need a way to show that a
+          specific party vouched for it. That is the job of public-key cryptography and signatures, in the next two chapters.
+        </p>
+      </div>
+
+      <div data-widget="quiz" data-quiz="02-hashing"></div>
+    </main>
+  </body>
+</html>

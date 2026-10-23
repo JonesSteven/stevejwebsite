@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Inspecting Real Credentials · Content Credentials</title>
+    <script type="module" crossorigin src="/c2pa/assets/main-DJhQTbU5.js"></script>
+    <link rel="stylesheet" crossorigin href="/c2pa/assets/main-BeFfSfFm.css">
+  </head>
+  <body data-chapter="10-inspect">
+    <main>
+      <h1>Inspecting real Content Credentials</h1>
+      <p class="lede">Time to leave the simulation. This chapter uses the official C2PA SDK, the Rust reference implementation compiled to WebAssembly, to read real files.</p>
+
+      <div class="objectives">
+        <h2>By the end of this chapter you will be able to</h2>
+        <ul>
+          <li>Read a real manifest store and find the active manifest, its signer, assertions and ingredients.</li>
+          <li>Interpret real validation results, including deliberately broken test files.</li>
+          <li>Explain why test files are “Valid” but not “Trusted”.</li>
+        </ul>
+      </div>
+
+      <h2>The tools</h2>
+      <p>
+        The Content Authenticity Initiative maintains open-source C2PA implementations: <b>c2pa-rs</b> (Rust), with bindings for
+        JavaScript, Python, C/C++ and more, and the command-line tool <b>c2patool</b>. The inspector below uses
+        <code>@contentauth/c2pa-web</code>, which runs c2pa-rs in a Web Worker. Everything happens in your browser, and files you drop in are not uploaded.
+      </p>
+      <p>
+        The SDK returns a <b>manifest store report</b> as JSON. It is a convenient view of the store rather than the raw JUMBF/CBOR, but every
+        part corresponds to something you’ve learned. The links next to each field point back to the relevant chapter.
+      </p>
+
+      <div data-widget="inspector"></div>
+
+      <h2>A guided tour</h2>
+      <h3>1. “C: a simple claim”</h3>
+      <ul>
+        <li>Find <b>Signed by (issuer)</b> and <b>Certificate CN</b>. That is the certificate subject information from chapter 5.</li>
+        <li>Find <b>Algorithm</b>. You’ll likely see <code>Ps256</code> or <code>Es256</code> (chapter 3).</li>
+        <li>Expand the assertions. Look for <code>c2pa.actions</code> and the hash assertions. Some older files use 1.x labels, such as
+          <code>c2pa.actions</code> rather than <code>c2pa.actions.v2</code>, and claim version 1.</li>
+        <li>The <b>validation state</b> is <em>Valid</em>, not <em>Trusted</em>, and <code>signingCredential.untrusted</code> is listed under
+          failures. These files were signed with the SDK’s test certificate, which isn’t on any trust list. The spec treats “untrusted” as a failure
+          of the <em>trust</em> check, but the manifest still meets every requirement for <em>Valid</em>. That is exactly the “attacker re-signs”
+          situation from the Tamper Lab: mathematically intact, but not anchored to a trusted root. You may also see
+          <code>signingCredential.ocsp.skipped</code>, meaning no revocation check was performed.</li>
+      </ul>
+      <h3>2. “CA”, “CAI” and “CACA”: ingredients and chains</h3>
+      <ul>
+        <li>In <b>CA</b> and <b>CAI</b>, the active manifest lists ingredients: a <code>parentOf</code>, and in CAI also a <code>componentOf</code>.
+          Those ingredient files had no credentials of their own, so the store holds only one manifest, and each ingredient says “unknown
+          provenance”. The chain honestly stops there (chapter 9).</li>
+        <li><b>CACA</b> is an edit of a file that <em>already</em> carried a manifest. Now the store holds two manifests: the active one (starred) and
+          the earlier one, which the active manifest’s <code>parentOf</code> ingredient points to. This is the provenance graph from chapter 9, in a real file.</li>
+      </ul>
+      <h3>3. The broken files</h3>
+      <ul>
+        <li><b>E-sig</b>: expect <code>claimSignature.mismatch</code>. The signature doesn’t match the claim (chapter 4). You’ll also see
+          <code>timeStamp.mismatch</code>, because the time-stamp’s message imprint no longer matches the altered signature (chapter 6).</li>
+        <li><b>E-uri</b>: expect <code>assertion.hashedURI.mismatch</code>. An assertion was altered after signing (chapter 7).</li>
+        <li><b>E-dat</b>: expect <code>assertion.dataHash.mismatch</code>. The image bytes no longer match the hard binding.</li>
+        <li><b>A</b>: no manifest at all. This shows how an ordinary JPEG looks: its EXIF says Canon and Lightroom, but nothing verifies that.</li>
+      </ul>
+      <p>
+        Compare these with the Tamper Lab table in chapter 8. The production SDK reports the same codes for the same attacks.
+      </p>
+
+      <h2>Try your own files</h2>
+      <p>Content Credentials are increasingly common. Images to try, if you have them:</p>
+      <ul>
+        <li>Photos from C2PA-capable cameras (several Leica, Sony, Nikon and Canon models) or phones with Content Credentials support.</li>
+        <li>Images from AI generators that attach Content Credentials. Their manifests typically record <code>trainedAlgorithmicMedia</code>.</li>
+        <li>Images exported from editing software with Content Credentials enabled.</li>
+      </ul>
+      <p>
+        Real-world credentials signed by certificates on the C2PA Trust List may still show as <em>Valid</em> here. This inspector uses the SDK’s
+        default settings and is not configured with the official trust list, which is a reminder that trust is always a validator configuration.
+        Public tools such as the Content Credentials “Verify” site configure trust lists for you.
+      </p>
+
+      <div class="callout spec">
+        <div class="callout-title">For developers</div>
+        <p>
+          The same report is available on the command line with <code>c2patool yourfile.jpg</code>, or with <code>c2patool yourfile.jpg --detailed</code> for a
+          lower-level view closer to the actual CBOR structures. In code, the reading step this page performs is essentially:
+        </p>
+        <pre class="code"><code>const c2pa = await createC2pa({ wasmSrc });
+const reader = await Reader.fromBlob(c2pa, blob.type, blob);
+const store = await reader.manifestStore();   // the JSON report
+console.log(store.validation_state, store.active_manifest);</code></pre>
+      </div>
+
+      <div data-widget="quiz" data-quiz="10-inspect"></div>
+    </main>
+  </body>
+</html>

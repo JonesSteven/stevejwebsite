@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>The Bigger Picture · Content Credentials</title>
+    <script type="module" crossorigin src="/c2pa/assets/main-DJhQTbU5.js"></script>
+    <link rel="stylesheet" crossorigin href="/c2pa/assets/main-BeFfSfFm.css">
+  </head>
+  <body data-chapter="13-cawg-more">
+    <main>
+      <h1>Other CAWG assertions and the big picture</h1>
+      <p class="lede">Provenance isn’t only about the past. Creators also want to say what may happen to their work next. This chapter covers the AI-usage assertion, then steps back to weigh what the whole system can and can’t do.</p>
+
+      <div class="objectives">
+        <h2>By the end of this chapter you will be able to</h2>
+        <ul>
+          <li>Build and read a <code>cawg.training-mining</code> assertion.</li>
+          <li>Explain the privacy design choices in C2PA and CAWG.</li>
+          <li>Give a balanced account of what Content Credentials can and cannot establish.</li>
+        </ul>
+      </div>
+
+      <h2>Training and data mining: <code>cawg.training-mining</code></h2>
+      <p>
+        Many creators want a say in whether their work is used to train AI models. The CAWG <b>Training and Data Mining Assertion</b> (version 1.1,
+        DIF ratified, May 2025) gives them a standard, machine-readable way to state their preferences inside the signed manifest. (C2PA 1.x had a
+        similar <code>c2pa.training-mining</code> assertion. CAWG’s version uses the <code>cawg.</code> prefix because it isn’t a C2PA product.)
+      </p>
+      <p>The assertion holds an <code>entries</code> map. Four keys are predefined:</p>
+      <ul>
+        <li><code>cawg.data_mining</code>: extracting patterns or trends, including text recognition (OCR) in images.</li>
+        <li><code>cawg.ai_inference</code>: using the asset as input to a trained model to get a result (for example, asking a model to describe it).</li>
+        <li><code>cawg.ai_training</code>: training non-generative models, such as classifiers or object detectors.</li>
+        <li><code>cawg.ai_generative_training</code>: training models that can generate new content.</li>
+      </ul>
+      <p>
+        Each entry has a <code>use</code> value: <code>allowed</code>, <code>notAllowed</code> or <code>constrained</code>. With
+        <code>constrained</code>, an optional <code>constraint_info</code> string explains the conditions, such as a licence name or a URL to a policy.
+        If a use is <code>constrained</code> but no information is given, consumers should treat it as <code>notAllowed</code>. Custom entry keys
+        are allowed if they follow C2PA’s custom-label rules.
+      </p>
+
+      <div data-widget="training-mining"></div>
+
+      <div class="callout warn">
+        <div class="callout-title">A preference, not a lock</div>
+        <p>
+          The assertion is cryptographically bound to the asset and signed, so nobody can quietly change your stated preference. But it can’t
+          technically <em>prevent</em> anyone from training on your image. Its force comes from how AI developers, platforms, contracts and
+          regulations choose to honour machine-readable opt-outs. Pairing it with an identity assertion lets the preference be attributed to the
+          rights holder.
+        </p>
+      </div>
+
+      <h2>Metadata: <code>cawg.metadata</code></h2>
+      <p>
+        C2PA 2.x restricted its own <code>c2pa.metadata</code> assertion to a fixed set of fields. CAWG’s metadata assertion fills the gap. It carries
+        richer descriptive metadata (captions, keywords, creator information from IPTC, Dublin Core, EXIF and others) as JSON-LD inside the
+        manifest, where it gains the integrity protection that ordinary file metadata lacks (chapter 1).
+      </p>
+
+      <h2>Privacy by design</h2>
+      <p>Provenance can expose people. Several design choices try to limit that:</p>
+      <ul>
+        <li><b>Identity is optional.</b> C2PA signatures identify products, not people. Adding a CAWG identity assertion is the creator’s choice.</li>
+        <li><b>Selective vouching.</b> A credential holder chooses which assertions they reference. A photographer can sign their creative role
+          without endorsing an embedded location.</li>
+        <li><b>Redaction.</b> Sensitive assertions, such as GPS location, can be removed from earlier manifests in a transparent, accountable way (chapter 9).</li>
+        <li><b>Minimal data to third parties.</b> Time-stamp authorities see only a hash (chapter 6).</li>
+      </ul>
+      <p>
+        Risks remain. A camera that always signs with a unique per-device certificate could, in principle, link all photos from one device. Viewers
+        and platforms must present provenance responsibly. And the absence of credentials must never be treated as proof of fakery, or people who
+        strip metadata to protect themselves would be penalised.
+      </p>
+
+      <h2>What Content Credentials can establish</h2>
+      <ul>
+        <li>This exact content (byte-for-byte, or via soft binding a close relative) is described by this manifest.</li>
+        <li>The manifest hasn’t changed since it was signed.</li>
+        <li>It was signed by a product whose certificate chains to a CA on your validator’s trust list, at a time vouched for by a trusted TSA.</li>
+        <li>The product recorded how the content was made (captured, generated, composited) and what was done to it, with the same guarantees for
+          each ingredient whose manifest is present.</li>
+        <li>With CAWG: a named person or organisation, verified by an issuer you trust, cryptographically associated themselves with the content in a stated role, and stated their AI-usage preferences.</li>
+      </ul>
+
+      <h2>What they cannot establish</h2>
+      <ul>
+        <li><b>Truth.</b> A real camera can photograph a staged scene. Provenance shows origin, not reality.</li>
+        <li><b>Honesty of signers.</b> A trusted product with a bug, or a compromised key, can sign false assertions. Trust lists and revocation
+          limit the damage but can’t make it zero.</li>
+        <li><b>Completeness.</b> Steps taken outside C2PA-aware tools leave gaps. An ingredient without credentials has unknown provenance.</li>
+        <li><b>Anything about unsigned content.</b> Most content today has no credentials, and stripping is easy. “No credentials” means “no information”.</li>
+        <li><b>Universal trust.</b> “Trusted” is always relative to a validator’s trust configuration, a policy choice made by whoever builds the viewer.</li>
+      </ul>
+
+      <h2>The ecosystem</h2>
+      <p>
+        The system only works if many parties take part. Camera makers sign at capture. Editing tools preserve and extend manifests. AI services
+        label generated output. Platforms keep credentials and show them to viewers. News organisations add identity and publication records.
+        Governments and regulators increasingly point to provenance standards in rules on AI transparency. Each participant is a claim generator
+        or validator in the vocabulary you now know.
+      </p>
+
+      <div data-widget="quiz" data-quiz="13-cawg-more"></div>
+    </main>
+  </body>
+</html>

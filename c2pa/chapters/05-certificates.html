@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Certificates and Trust · Content Credentials</title>
+    <script type="module" crossorigin src="/c2pa/assets/main-DJhQTbU5.js"></script>
+    <link rel="stylesheet" crossorigin href="/c2pa/assets/main-BeFfSfFm.css">
+  </head>
+  <body data-chapter="05-certificates">
+    <main>
+      <h1>Certificates and chains of trust</h1>
+      <p class="lede">A certificate is a signed statement: “this public key belongs to this name”. Chain a few together and a handful of trusted organisations can vouch for millions of keys.</p>
+
+      <div class="objectives">
+        <h2>By the end of this chapter you will be able to</h2>
+        <ul>
+          <li>Describe what is inside an X.509 certificate.</li>
+          <li>Explain root, intermediate and end-entity (leaf) certificates and how a chain is validated.</li>
+          <li>Explain trust anchors and trust lists, including the C2PA Trust List.</li>
+          <li>Explain revocation and why it exists.</li>
+        </ul>
+      </div>
+
+      <h2>A certificate is a signed sentence</h2>
+      <p>
+        Recall the problem from chapter 4: a public key carries no name. The fix is to have someone you trust sign a statement
+        that links them:
+      </p>
+      <div class="math">“The public key 04:a1:9c:…:3f belongs to PhotoApp Inc.
+ Signatures it verifies may be trusted as C2PA claims signed by PhotoApp Inc.
+ This statement is valid from 2025-01-01 to 2027-01-01.”
+                         — signed, Example Issuing CA</div>
+      <p>
+        That signed statement is a <b>certificate</b>, and the signer is a <b>Certificate Authority (CA)</b>. If you trust the CA’s
+        public key, you can verify the CA’s signature on the certificate and believe the name–key link it states.
+      </p>
+      <p>
+        Notice what is, and isn’t, inside. A certificate contains only the <em>public</em> key, because it is meant to be shown to
+        everyone. The matching private key never leaves PhotoApp Inc., and the CA never sees it. So when a certificate says what
+        a key “may be used for”, it is talking about the <b>key pair</b>: PhotoApp’s private key may <em>sign</em> C2PA claims,
+        and the public key in the certificate is what everyone else uses to <em>verify</em> those signatures.
+      </p>
+
+      <h3>Inside an X.509 certificate</h3>
+      <p>Virtually all certificates on the internet, and those C2PA requires, follow the <b>X.509</b> standard (RFC 5280). The important fields are:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Field</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>Subject</td><td>Who the key belongs to (e.g. <code>CN=PhotoApp Inc., O=PhotoApp, C=US</code>).</td></tr>
+            <tr><td>Subject Public Key Info</td><td>The public key itself and its algorithm (e.g. EC P-256).</td></tr>
+            <tr><td>Issuer</td><td>The CA that signed this certificate.</td></tr>
+            <tr><td>Serial number</td><td>Unique per issuer. Used for revocation.</td></tr>
+            <tr><td>Validity (notBefore / notAfter)</td><td>The window during which the certificate is valid.</td></tr>
+            <tr><td>Basic Constraints</td><td>Is this a CA (allowed to sign other certificates) or an end-entity?</td></tr>
+            <tr><td>Key Usage / Extended Key Usage (EKU)</td><td>What the key pair may be used for: what the matching private key may sign, and so what signatures this public key may be trusted to verify. C2PA defines an EKU for claim signing; time-stamp authorities use the <code>timeStamping</code> EKU.</td></tr>
+            <tr><td>Signature</td><td>The issuer’s signature over all the fields above.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Real certificates are encoded in a binary format (ASN.1 DER). In the demos we use a simplified JSON form, but each
+        certificate is genuinely signed with a real ECDSA key, and validation genuinely checks those signatures.
+      </p>
+
+      <h2>Chains: trust that scales</h2>
+      <p>One CA signing every key on Earth wouldn’t work, and if its key leaked, everything would fall. So certificates form a <b>hierarchy</b>:</p>
+      <ul>
+        <li>A <b>root CA</b> has a <b>self-signed</b> certificate, signed by its own private key. Nobody vouches for a root. You choose to
+          trust it. Root keys are kept offline in vaults and used rarely.</li>
+        <li>The root signs certificates for <b>intermediate CAs</b>, which do the day-to-day issuing.</li>
+        <li>Intermediates sign <b>end-entity</b> (or “leaf”) certificates for the actual signers: a camera model, an app, a service.</li>
+      </ul>
+      <p>
+        To check a leaf certificate, a validator walks the <b>chain</b>: leaf → intermediate → root. At each link it checks the
+        signature, that names match, that the issuer is allowed to be a CA, the validity dates, and revocation status. Finally it
+        checks that the root is one it trusts. That last step is the <b>trust anchor</b>.
+      </p>
+
+      <div data-widget="cert-chain"></div>
+
+      <p>Work through each switch and read which check fails:</p>
+      <ul>
+        <li><b>Untrust the root</b>: every signature still verifies, but the chain ends somewhere you have no reason to believe. Mathematics can’t create trust. It can only carry it.</li>
+        <li><b>Tamper with the leaf’s name</b>: the intermediate’s signature over the leaf no longer matches.</li>
+        <li><b>Rogue root</b>: an attacker can make a perfect chain to their own root with any name on it. Only the trust store stops this.</li>
+        <li><b>Non-CA issuer</b>: a valid leaf certificate (say, for a website) can’t be used to vouch for other keys.</li>
+        <li><b>Move the date</b>: certificates are only valid within their window. (The next chapter shows how signatures can outlive it.)</li>
+      </ul>
+
+      <h2>Trust anchors and trust lists</h2>
+      <p>
+        Every validator ships with, or is configured with, a <b>trust store</b>: the set of root certificates it trusts. Your web
+        browser trusts roughly 150 roots chosen by Apple, Google, Microsoft or Mozilla. That’s why your browser accepts
+        <code>https://</code> certificates from sites it has never seen.
+      </p>
+      <p>
+        C2PA validators work the same way. Since C2PA 2.0, the specification defines a default <b>C2PA Trust List</b> of CAs that issue
+        certificates to conforming hardware and software products, administered through the C2PA conformance programme. A
+        validator may also be configured with additional trust anchors, for example a newsroom trusting its own internal CA.
+      </p>
+      <div class="callout key">
+        <div class="callout-title">Key idea</div>
+        <p>
+          Cryptography answers “did this key sign this?”. Certificates answer “whose key is this, according to whom?”. The trust store
+          answers “do I believe the ‘according to whom’?”. That last question is a <em>policy</em> decision, not a mathematical one, and
+          different validators can legitimately answer it differently.
+        </p>
+      </div>
+
+      <h2>Revocation: taking it back</h2>
+      <p>
+        What if a private key is stolen, or a certificate was issued by mistake, before its expiry date? The CA <b>revokes</b> it and
+        publishes that fact, so validators can check:
+      </p>
+      <ul>
+        <li><b>CRL (Certificate Revocation List)</b>: a signed list of revoked serial numbers, published periodically.</li>
+        <li><b>OCSP (Online Certificate Status Protocol)</b>: a signed real-time answer to “is serial X still good?”. C2PA allows
+          OCSP responses to be stored (“stapled”) inside the manifest, so validation still works offline later.</li>
+      </ul>
+      <p>
+        Revocation raises a puzzle. If a camera’s key is revoked in June 2025, what about the honest photos it signed in 2024? They
+        shouldn’t suddenly become untrustworthy, but we need proof they were signed <em>before</em> the compromise. That proof is a
+        trusted time-stamp, the topic of the next chapter.
+      </p>
+
+      <div class="callout spec">
+        <div class="callout-title">C2PA specifics</div>
+        <p>
+          The C2PA specification requires claim signers to use X.509 certificates. It defines certificate profile requirements
+          (key usage, EKU, algorithms) and validation outcomes such as <code>signingCredential.trusted</code>,
+          <code>signingCredential.untrusted</code>, <code>signingCredential.invalid</code> and
+          <code>signingCredential.ocsp.revoked</code>. You’ll see these codes produced in the Tamper Lab and by the real SDK in chapter 10.
+        </p>
+      </div>
+
+      <div data-widget="quiz" data-quiz="05-certificates"></div>
+    </main>
+  </body>
+</html>

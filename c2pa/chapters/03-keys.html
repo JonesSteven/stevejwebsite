@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Keys and Trapdoors · Content Credentials</title>
+    <script type="module" crossorigin src="/c2pa/assets/main-DJhQTbU5.js"></script>
+    <link rel="stylesheet" crossorigin href="/c2pa/assets/main-BeFfSfFm.css">
+  </head>
+  <body data-chapter="03-keys">
+    <main>
+      <h1>Secret keys, key pairs and the trapdoor</h1>
+      <p class="lede">Public-key cryptography is one of the great inventions of the 20th century. It lets you prove something to people you have never met, without sharing any secret with them.</p>
+
+      <div class="objectives">
+        <h2>By the end of this chapter you will be able to</h2>
+        <ul>
+          <li>Explain symmetric cryptography and its key-distribution problem.</li>
+          <li>Explain what a key pair is and why the private key must stay private.</li>
+          <li>Work through RSA key generation, encryption and signing with small numbers.</li>
+          <li>Describe, conceptually, how elliptic-curve keys (used by C2PA’s ES256) work.</li>
+          <li>Recognise keys in the formats you’ll meet in the wild (JWK, PEM).</li>
+        </ul>
+      </div>
+
+      <h2>Symmetric cryptography: one shared secret</h2>
+      <p>
+        The oldest kind of cryptography is <b>symmetric</b>: both sides use the <em>same</em> secret key. Caesar shifting
+        letters by three, wartime Enigma machines and today’s AES all work this way. Alice locks the message with the key, and Bob
+        unlocks it with the same key.
+      </p>
+
+      <div data-widget="shared-secret"></div>
+
+      <p>Symmetric ciphers are fast and strong, but they have two problems that matter to us:</p>
+      <ol>
+        <li><b>Key distribution.</b> Alice and Bob must agree on the secret <em>before</em> they can communicate securely. Doing that
+          over an insecure channel is the very problem we were trying to solve.</li>
+        <li><b>No proof of authorship.</b> If Alice and Bob share a key, either of them could have produced any message. Bob can’t
+          prove to a third party that Alice wrote something, because he could have written it himself. For provenance, where
+          the whole world must be able to check who vouched for a photo, this is fatal.</li>
+      </ol>
+
+      <h2>The asymmetric idea: two keys, one lock</h2>
+      <p>
+        In 1976 Whitfield Diffie and Martin Hellman published a radical idea, and in 1977 Rivest, Shamir and Adleman (RSA) gave a
+        practical construction. (GCHQ researchers had found it secretly a few years earlier.) The idea: generate <b>two different keys
+        that are mathematically linked</b>.
+      </p>
+      <ul>
+        <li>A <b class="priv">private key</b>, which you keep secret. Nobody else ever sees it.</li>
+        <li>A <b class="pub">public key</b>, which you publish to the whole world.</li>
+      </ul>
+      <p>What one key does, only the other can undo or check. That gives two uses:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Use</th><th>Lock with</th><th>Unlock / check with</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td>Encryption</td><td class="pub">recipient’s public key</td><td class="priv">recipient’s private key</td><td>Only the recipient can read it.</td></tr>
+            <tr><td><b>Signing</b></td><td class="priv">signer’s private key</td><td class="pub">signer’s public key</td><td><b>Anyone can check it came from the signer.</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        C2PA uses only the second use, <b>signing</b>. There is no encryption in C2PA: manifests are meant to be read by
+        everyone. The point is to make them <em>unforgeable</em>, not secret.
+      </p>
+      <p class="analogy">A useful picture for signing: a wax seal. Only you own the signet ring (private key), but everyone knows what your seal looks like (public key) and can check an impression against it. Unlike wax, a digital seal is also bound to the exact content it seals.</p>
+
+      <h2>How can such keys exist? Trapdoor functions</h2>
+      <p>
+        The trick is a <b>trapdoor one-way function</b>: an operation that is easy to perform, practically impossible to
+        reverse, <em>unless</em> you know a secret shortcut (the trapdoor). The public key lets anyone do the easy direction. The
+        private key is the trapdoor.
+      </p>
+      <p>RSA’s trapdoor is <b>multiplying primes vs. factoring</b>:</p>
+      <ul>
+        <li>Multiplying two primes is easy. 61 × 53 = 3233 takes moments by hand, and a computer can multiply two 300-digit primes in microseconds.</li>
+        <li>Going backwards is hard. Given only 3233, which two primes made it? For small numbers you can try them all. For a
+          617-digit number, every known classical method would run for longer than the age of the universe.</li>
+      </ul>
+
+      <h3>A tiny bit of modular arithmetic</h3>
+      <p>
+        RSA works with <b>modular arithmetic</b>, or “clock arithmetic”. On a 12-hour clock, 9 o’clock plus 5 hours is 2 o’clock:
+        you wrap around. We write that as <code>(9 + 5) mod 12 = 2</code>. “mod n” just means “take the remainder after dividing by n”.
+        So <code>17 mod 5 = 2</code>, and <code>3<sup>4</sup> mod 7 = 81 mod 7 = 4</code>.
+      </p>
+      <p>
+        The key fact RSA relies on: there are numbers <code>e</code> and <code>d</code> such that raising to the power
+        <code>e</code> and then to the power <code>d</code> (mod n) gets you back where you started. In other words,
+        <code>(m<sup>e</sup>)<sup>d</sup> mod n = m</code>. Finding <code>d</code> from <code>e</code> requires knowing
+        φ(n) = (p−1)(q−1), and computing that requires the prime factors <code>p</code> and <code>q</code>. That is the trapdoor.
+      </p>
+
+      <h3>RSA, step by step</h3>
+      <p>
+        The calculator below does real RSA with numbers small enough to follow. Change the primes, the exponent or the message,
+        and every line updates. Then play the attacker.
+      </p>
+
+      <div data-widget="toy-rsa"></div>
+
+      <div class="callout warn">
+        <div class="callout-title">Textbook RSA is not real-world RSA</div>
+        <p>
+          Real systems never apply RSA directly to a message like this. They first <em>hash</em> the message (chapter 2) and use a
+          padding scheme with randomness. C2PA permits <b>RSASSA-PSS</b> (“PS256/PS384/PS512”) with keys of at least 2048 bits.
+          The underlying mathematics, though, is exactly what you just did.
+        </p>
+      </div>
+
+      <h2>Elliptic curves: smaller keys, same strength</h2>
+      <p>
+        RSA keys must be large (2048–4096 bits) to be safe. <b>Elliptic-curve cryptography (ECC)</b> gives equivalent security with
+        much smaller keys (256 bits), so it is faster and lighter. It’s the default in most modern systems, including most
+        C2PA implementations, which typically sign with <b>ES256</b>: ECDSA on the curve <b>P-256</b> with SHA-256.
+      </p>
+      <p>Here is the idea, without the algebra:</p>
+      <ul>
+        <li>An <b>elliptic curve</b> is a set of points (x, y) satisfying an equation like y² = x³ + ax + b, computed modulo a large prime.
+          Plotted, it’s a scatter of points, not a smooth curve.</li>
+        <li>There is a way to <b>“add” two points</b> on the curve to get a third point on the curve. Adding a point to itself
+          repeatedly is called <b>scalar multiplication</b>: <code>d × G = G + G + … + G</code> (d times), where <code>G</code> is a
+          fixed, publicly known “generator” point.</li>
+        <li>Computing <code>Q = d × G</code> is fast, even for d around 2<sup>256</sup>, using a doubling trick, much like the
+          square-and-multiply in the RSA demo.</li>
+        <li>Going backwards, finding <code>d</code> given only <code>Q</code> and <code>G</code>, is the <b>elliptic-curve discrete
+          logarithm problem</b>, and no efficient method is known.</li>
+      </ul>
+      <p>So an elliptic-curve key pair is simply:</p>
+      <div class="math">private key  d = a random 256-bit number
+public key   Q = d × G      (a point: two 256-bit coordinates x, y)</div>
+      <p>
+        <b>Ed25519</b> is another popular curve-based scheme (EdDSA on Curve25519), also permitted by C2PA. The full list of
+        signature algorithms allowed by the C2PA specification is: ES256, ES384, ES512 (ECDSA), PS256, PS384, PS512 (RSA-PSS),
+        and Ed25519.
+      </p>
+
+      <h2>A real key pair, generated in your browser</h2>
+      <p>
+        Your browser includes a professional-grade cryptography library, the Web Crypto API. Here it generates a real P-256 key pair:
+        exactly the kind a camera or app would use to sign C2PA manifests.
+      </p>
+
+      <div data-widget="keys"></div>
+
+      <p>Things to notice:</p>
+      <ul>
+        <li>The private key is just a number, <code>d</code>, encoded in base64url. Everything else is derived from it.</li>
+        <li>The public key is the point <code>(x, y)</code>. Formats like <b>JWK</b> (JSON Web Key) and <b>PEM</b> (base64 text between
+          “BEGIN/END” lines) are different wrappings of the same numbers.</li>
+        <li>Generate a few. Each one is different, because private keys must come from a high-quality <b>random</b> source. A
+          predictable private key is a broken private key.</li>
+      </ul>
+
+      <h2>Keeping private keys private</h2>
+      <p>Everything in this course depends on one assumption: <b>only the owner can use their private key</b>. In practice:</p>
+      <ul>
+        <li>Cameras keep signing keys in <b>secure hardware</b> (a secure element or trusted execution environment) that can sign
+          but will never reveal the key.</li>
+        <li>Services keep keys in <b>Hardware Security Modules (HSMs)</b> or cloud key-management services.</li>
+        <li>If a private key leaks, anyone can sign as its owner. Chapter 5 covers how the world is told to stop trusting a leaked key
+          (<em>revocation</em>), and chapter 6 how earlier signatures can remain trustworthy anyway.</li>
+      </ul>
+      <p>
+        The C2PA specification has explicit requirements for how claim generators must protect their signing keys, because a stolen
+        camera key would let an attacker sign fake “camera captures”.
+      </p>
+
+      <div class="callout spec">
+        <div class="callout-title">A note on quantum computers</div>
+        <p>
+          A large, fault-tolerant quantum computer could break both RSA and elliptic-curve cryptography using Shor’s algorithm.
+          None exists today, but standards bodies have published <em>post-quantum</em> signature algorithms (for example ML-DSA).
+          Specifications like C2PA name their algorithms explicitly partly so they can add new ones over time.
+        </p>
+      </div>
+
+      <div data-widget="quiz" data-quiz="03-keys"></div>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Why CAWG · Content Credentials</title>
+    <script type="module" crossorigin src="/c2pa/assets/main-DJhQTbU5.js"></script>
+    <link rel="stylesheet" crossorigin href="/c2pa/assets/main-BeFfSfFm.css">
+  </head>
+  <body data-chapter="11-cawg-why">
+    <main>
+      <h1>Why identity needed its own spec</h1>
+      <p class="lede">A C2PA signature tells you which product made a manifest. It doesn’t tell you which person or organisation stands behind the content. CAWG exists to fill that gap.</p>
+
+      <div class="objectives">
+        <h2>By the end of this chapter you will be able to</h2>
+        <ul>
+          <li>Explain the difference between the claim generator and the person using it.</li>
+          <li>Explain why C2PA 2.0 moved human identity out of the core specification.</li>
+          <li>Describe what CAWG is, who runs it, and what it publishes.</li>
+        </ul>
+      </div>
+
+      <h2>Who signed this, really?</h2>
+      <p>
+        Remember what the claim signature’s certificate identifies: the <b>claim generator</b>. When you export from an editing app, the manifest
+        is signed with a key belonging to that app or its maker, often kept in the vendor’s cloud service. When a camera signs, the key belongs to
+        that camera model or unit. So the signature means: <em>“this product, operating as designed, produced this manifest.”</em>
+      </p>
+
+      <div data-widget="who-signed"></div>
+
+      <p>
+        For many purposes that is exactly right. Knowing that an image came straight from a C2PA-conformant camera, or from a particular AI
+        service, is valuable. But it leaves out something people care about: <b>who</b> made it, and in what <b>role</b>.
+      </p>
+
+      <h2>Why not just put people in C2PA certificates?</h2>
+      <p>
+        Early versions of C2PA (1.x) tried to describe human “actors” and included a section on W3C Verifiable Credentials. Version 2.0, in
+        January 2024, made what its own changelog calls a significant departure. It reduced the use of “actor”, which no longer represents humans
+        and organisations; introduced the C2PA Trust List for hardware and software; required X.509 certificates; and removed the Verifiable
+        Credentials section. Reasons for that separation include:
+      </p>
+      <ul>
+        <li><b>Different trust problems.</b> Deciding whether a camera model or app is conformant is a product-certification question. Deciding
+          whether someone is really “Jane Photographer of Reuters” is an identity-verification question. Mixing them confuses both.</li>
+        <li><b>Privacy and safety.</b> Identity must be optional. Many legitimate creators, such as whistleblowers, activists and people at risk,
+          need to publish authentic content <em>without</em> revealing who they are. Provenance about the device or tool should not force identity disclosure.</li>
+        <li><b>Diverse identity systems.</b> People prove who they are in many ways: corporate certificates, verified social accounts, government ID
+          checks, decentralised identifiers. A content-provenance spec shouldn’t have to standardise all of them.</li>
+      </ul>
+
+      <h2>Enter CAWG</h2>
+      <p>
+        The <b>Creator Assertions Working Group (CAWG)</b> began in 2024, incubated within the Content Authenticity Initiative community,
+        and is now a working group of the <b>Decentralized Identity Foundation (DIF)</b>. Its specifications are published as DIF ratified
+        specifications at <code>cawg.io</code>, and they define <em>assertions</em>: data structures that live inside C2PA manifests, alongside
+        C2PA’s own. Because they are ordinary assertions, they get all of C2PA’s integrity protection for free. They are hashed into the claim and
+        covered by the claim signature.
+      </p>
+      <p>CAWG’s main specifications are:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Specification</th><th>Label</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>Identity Assertion (v1.3, Aug 2026)</td><td><code>cawg.identity</code></td><td>Lets a named actor (a person or organisation) cryptographically bind their identity, and their role, to an asset.</td></tr>
+            <tr><td>Training and Data Mining Assertion (v1.1, May 2025)</td><td><code>cawg.training-mining</code></td><td>Records whether the asset may be used for AI training, inference or data mining.</td></tr>
+            <tr><td>Metadata Assertion (v1.1)</td><td><code>cawg.metadata</code></td><td>Carries descriptive metadata (EXIF, IPTC, Dublin Core… as JSON-LD) that C2PA 2.x no longer allows in its restricted <code>c2pa.metadata</code> assertion.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        CAWG also publishes an Organizational Identity Profile and user-experience guidance, and is drafting <em>proposed</em> extensions,
+        including a Consent assertion, an Endorsement assertion, a certificate policy, and identity-assertion variants built on verifiable
+        presentations and vLEI (verifiable Legal Entity Identifiers). Drafts can change significantly before ratification, so this course
+        focuses on the ratified specifications.
+      </p>
+      <p>
+        <code>cawg.</code> is a reserved prefix: claim generators must not invent their own labels beginning with it. When you see <code>cawg.*</code>
+        in a manifest, its meaning is defined by these specifications.
+      </p>
+
+      <h2>The mental model: two signers, two questions</h2>
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-title">C2PA claim signature</div>
+          <p><b>Signer:</b> the claim generator (product).</p>
+          <p><b>Question answered:</b> “Did trusted software or hardware produce this record of the asset’s origin and history, unchanged?”</p>
+          <p><b>Trust list:</b> the C2PA Trust List (plus local policy).</p>
+        </div>
+        <div class="panel">
+          <div class="panel-title">CAWG identity assertion</div>
+          <p><b>Signer:</b> the credential holder (a person or organisation).</p>
+          <p><b>Question answered:</b> “Who stands behind this content, in what role, as verified by whom?”</p>
+          <p><b>Trust:</b> the identity issuers the validator accepts (CAs, identity aggregators).</p>
+        </div>
+      </div>
+      <p>
+        The next chapter shows how these two signatures are woven together so that neither can be detached and reused, and how a validator checks
+        both.
+      </p>
+
+      <div data-widget="quiz" data-quiz="11-cawg-why"></div>
+    </main>
+  </body>
+</html>

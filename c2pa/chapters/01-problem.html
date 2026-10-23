@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>The Problem · Content Credentials</title>
+    <script type="module" crossorigin src="/c2pa/assets/main-DJhQTbU5.js"></script>
+    <link rel="stylesheet" crossorigin href="/c2pa/assets/main-BeFfSfFm.css">
+  </head>
+  <body data-chapter="01-problem">
+    <main>
+      <h1>The problem: trusting digital media</h1>
+      <p class="lede">A photograph used to be evidence. Today, anyone can make a convincing image of anything. How can anyone know where a piece of content really came from?</p>
+
+      <div class="objectives">
+        <h2>By the end of this chapter you will be able to</h2>
+        <ul>
+          <li>Explain why ordinary file metadata can’t be trusted.</li>
+          <li>Contrast <em>detecting</em> fakes with <em>proving</em> provenance.</li>
+          <li>Describe, at a high level, what C2PA and CAWG are and who makes them.</li>
+          <li>State clearly what Content Credentials can and cannot tell you.</li>
+        </ul>
+      </div>
+
+      <h2>A crisis of evidence</h2>
+      <p>
+        For most of the history of photography, faking a convincing image took skill, time and equipment. That friction
+        gave photographs a kind of default credibility. Then three things happened in quick succession:
+      </p>
+      <ol>
+        <li><b>Editing became effortless.</b> Desktop and phone editors made retouching, compositing and cloning trivial.</li>
+        <li><b>Distribution became instant and context-free.</b> An image is screenshotted, cropped, re-uploaded and shared
+          millions of times, losing every clue about where it started.</li>
+        <li><b>Generative AI arrived.</b> Systems can now synthesise photorealistic images, voices and video from a sentence of text.</li>
+      </ol>
+      <p>
+        The result is sometimes called the <em>liar’s dividend</em>. When fakes are easy, it isn’t only fakes that cause harm. Real
+        evidence can also be dismissed as “probably AI”. A journalist’s genuine photo of a war crime and a fabricated one look
+        identical on a phone screen.
+      </p>
+
+      <h2>Why not just look at the metadata?</h2>
+      <p>
+        Most image files carry <b>metadata</b>: extra information stored alongside the pixels. Cameras write
+        <abbr title="Exchangeable Image File Format">EXIF</abbr> fields such as camera model, exposure, date and GPS location.
+        Photo agencies add <abbr title="International Press Telecommunications Council">IPTC</abbr> fields such as caption, creator
+        and copyright. It is tempting to treat these as facts. Try the demo below.
+      </p>
+
+      <div data-widget="metadata-forgery"></div>
+
+      <p>Three properties make ordinary metadata useless as evidence:</p>
+      <ul>
+        <li><b>No integrity.</b> Nothing detects a change. Edit a field and the file is exactly as “valid” as before.</li>
+        <li><b>No attribution.</b> Nothing records <em>who</em> wrote a field. “Artist: Jane Photographer” might have been typed by anyone.</li>
+        <li><b>No durability.</b> Many platforms strip metadata on upload, for privacy and file size, so even honest metadata rarely survives.</li>
+      </ul>
+      <p>
+        By the end of this course you will see how C2PA addresses the first two directly with cryptography, and partially
+        addresses the third.
+      </p>
+
+      <h2>Detection vs. provenance</h2>
+      <p>There are two broad strategies for dealing with untrustworthy media.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th></th><th>Detection</th><th>Provenance</th></tr></thead>
+          <tbody>
+            <tr><td>Question asked</td><td>“Does this look fake?”</td><td>“What does this content’s verifiable history say about it?”</td></tr>
+            <tr><td>How</td><td>Classifiers look for artefacts of manipulation or generation.</td><td>Creators and tools attach signed, tamper-evident records.</td></tr>
+            <tr><td>Weakness</td><td>An arms race: generators improve and detectors fall behind. Results are probabilistic.</td><td>Only works for content that carries credentials, and credentials can be removed.</td></tr>
+            <tr><td>Output</td><td>A probability (“87% likely synthetic”).</td><td>Cryptographic facts (“signed by X; unchanged since”).</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        The two approaches are complementary. Provenance flips the burden of proof: instead of trying to catch every fake,
+        it lets <em>authentic content prove itself</em>. A newsroom can show that a photo came from a specific camera, was
+        edited in specific ways, and was published by them. An AI image generator can label its output as AI-generated in a way
+        that is hard to remove silently.
+      </p>
+
+      <h2>Enter C2PA and Content Credentials</h2>
+      <p>
+        The <b>Coalition for Content Provenance and Authenticity (C2PA)</b> is a standards body formed in 2021 by companies
+        including Adobe, Microsoft, Intel, the BBC, Truepic and Arm, joined since by camera makers, AI companies, news organisations
+        and platforms. It publishes the <b>C2PA Technical Specification</b>, an open standard for attaching provenance
+        information to digital content.
+      </p>
+      <p>
+        That provenance information is called a <b>manifest</b>. When shown to people, for example via the small “cr” icon,
+        it is branded <b>Content Credentials</b>. A manifest can record:
+      </p>
+      <ul>
+        <li>what kind of device or software made or changed the content (a specific camera model, an editing app, an AI model),</li>
+        <li>how the content was made (captured by a camera? generated by AI? a composite?),</li>
+        <li>what was done to it (cropped, colour-adjusted, combined with other images),</li>
+        <li>which earlier assets it was made from (its <em>ingredients</em>), each with its own history.</li>
+      </ul>
+      <p>
+        Everything in a manifest is <b>cryptographically signed</b> and <b>bound</b> to the exact content, so any change to the content or
+        the manifest is detectable. The rest of Part II explains precisely how.
+      </p>
+
+      <h3>…and CAWG</h3>
+      <p>
+        You’ll notice the list above says what <em>device or software</em> made the content, not what <em>person</em> made it.
+        That is deliberate. Since version 2.0, the C2PA signature identifies the product that created the manifest, not the
+        human using it. Identity, meaning who the creator is and what role they played, is handled by the <b>Creator Assertions
+        Working Group (CAWG)</b>, now part of the <b>Decentralized Identity Foundation (DIF)</b>. CAWG defines additional
+        assertions that plug into C2PA manifests, most importantly the <b>identity assertion</b>. Part IV covers it in depth.
+      </p>
+
+      <div class="callout warn">
+        <div class="callout-title">Hold on to this</div>
+        <p>
+          Content Credentials prove <b>who signed what, and that it hasn’t changed since</b>. They do <b>not</b> prove that
+          the content is <em>true</em>. A trustworthy camera can photograph a staged scene. An honest editor can sign a misleading
+          crop. Provenance gives you verifiable facts about origin and history. Judging the content remains a human job.
+        </p>
+      </div>
+
+      <h2>The roadmap</h2>
+      <p>To understand how a signature on a manifest can be trusted, you need four cryptographic building blocks. Each gets its own chapter:</p>
+      <ol>
+        <li><b>Hash functions</b>: compact fingerprints that change if anything changes (chapter 2).</li>
+        <li><b>Key pairs</b>: a private key that only you hold and a public key anyone can see (chapter 3).</li>
+        <li><b>Digital signatures</b>: proof that the holder of a private key approved exactly these bytes (chapter 4).</li>
+        <li><b>Certificates and time-stamps</b>: how you know <em>whose</em> key it is, and that it was valid when used (chapters 5–6).</li>
+      </ol>
+      <p>Part III then assembles these into C2PA, and Part IV adds CAWG identity.</p>
+
+      <div data-widget="quiz" data-quiz="01-problem"></div>
+    </main>
+  </body>
+</html>
