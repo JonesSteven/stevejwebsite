@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>C2PA in Products · Content Credentials</title>
+    <script type="module" crossorigin src="/c2pa/assets/main-Zbp6SF8P.js"></script>
+    <link rel="stylesheet" crossorigin href="/c2pa/assets/main-BeFfSfFm.css">
+  </head>
+  <body data-chapter="a1-implementations">
+    <main>
+      <h1>C2PA in real products today</h1>
+      <p class="lede">Which cameras, phones, editing tools, AI generators and platforms actually create, keep or show Content Credentials, and what their real-world rollouts teach about the ideas in this course.</p>
+
+      <div class="callout warn">
+        <div class="callout-title">A snapshot, not a buyer’s guide</div>
+        <p>
+          This page reflects what we could check in <b>October 2026</b>. Support changes with every firmware update and app
+          release, and many “supports C2PA” claims online are out of date or wrong. Before you rely on a product, check the
+          official <a href="https://spec.c2pa.org/conformance-explorer/" rel="noopener">C2PA Conformance Explorer</a>
+          and test a real file in a validator such as
+          <a href="https://verify.contentauthenticity.org" rel="noopener">Content Authenticity Inspect</a>. Product names here
+          are used only to describe them. No company has reviewed or endorsed this page.
+        </p>
+      </div>
+
+      <h2>Two different questions: “supports” vs “conforming”</h2>
+      <p>
+        A product can <b>support</b> C2PA, meaning it writes or reads manifests, without being a <b>conforming product</b>.
+        Conformance is the C2PA program described in chapters 5 and 9. A product that passes it is listed publicly, and its
+        signing certificate can chain to the official C2PA trust list. Listed generator products also get an
+        <b>assurance level</b>:
+      </p>
+      <ul>
+        <li><b>Level 1</b>: the product meets the spec’s requirements, and its keys are protected in ordinary ways.</li>
+        <li>
+          <b>Level 2</b>: stronger, attested protection. The signing key is held in secure hardware, and the platform proves
+          that the key and the app are genuine (for example Android Key Attestation or a cloud HSM attestation).
+        </li>
+      </ul>
+      <p>
+        The program only started in 2025, so many earlier implementations, including every dedicated camera below, still sign
+        with certificates from the manufacturer’s own trust list rather than the C2PA one. Validators may show those as
+        “valid signature, unknown signer” unless the validator also trusts the manufacturer.
+      </p>
+
+      <h2>Dedicated cameras</h2>
+      <p>
+        Signing at the moment of capture is the strongest form of provenance: there is no earlier step for anyone to have
+        altered. A few professional cameras do it today. Most target news photographers, and several need a paid licence or a
+        newsroom service.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Maker</th><th>Models</th><th>How it is turned on</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><b>Leica</b></td>
+              <td>M11-P (2023), M11-D, SL3-S</td>
+              <td>Built in, enabled in the menu</td>
+              <td>The M11-P was the first camera to sign C2PA manifests at capture. Keys sit in a dedicated security chip. Earlier models such as the M11, Q3 and SL3 lack that hardware.</td>
+            </tr>
+            <tr>
+              <td><b>Sony</b></td>
+              <td>Alpha 1, Alpha 1 II, Alpha 9 III, Alpha 7 IV, Alpha 7R V, Alpha 7S III, FX3, FX30, PXW-Z300, with newer bodies added since</td>
+              <td>Firmware, plus a licence from Sony’s Camera Authenticity Solution</td>
+              <td>Sold to news organisations, not individual photographers. Sony’s “Camera Verify” service added video checks in March 2026, and the cameras also record 3D depth information to help show the subject was a real scene, not a photo of a screen.</td>
+            </tr>
+            <tr>
+              <td><b>Canon</b></td>
+              <td>EOS R1, EOS R5 Mark II</td>
+              <td>Firmware, plus Canon’s paid Authenticity Imaging System for newsrooms</td>
+              <td>Rolled out first in Europe, the Middle East and Africa. The rollout had false starts, so check Canon’s current support pages for your region.</td>
+            </tr>
+            <tr>
+              <td><b>Nikon</b></td>
+              <td>Z6III (firmware 2.00, August 2025)</td>
+              <td>Firmware, plus a certificate from Nikon Imaging Cloud</td>
+              <td><b>Suspended.</b> See “Revocation in the real world” below.</td>
+            </tr>
+            <tr>
+              <td><b>Fujifilm, Panasonic</b></td>
+              <td>None shipping that we could confirm</td>
+              <td>Announced</td>
+              <td>Both are C2PA/CAI members and have announced plans, but we found no signing camera on sale.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted">
+        As of 22 October 2026, none of these cameras appear on the C2PA conforming products list. They sign under their
+        makers’ own certificates.
+      </p>
+
+      <h2>Smartphones and chips</h2>
+      <p>Phones take most of the world’s photos, so this is where adoption matters most. It is also very uneven.</p>
+      <ul>
+        <li>
+          <b>Google Pixel 10 (2025):</b> Pixel Camera adds Content Credentials to <em>every</em> JPEG it takes, by default. It
+          is a conforming product at <b>assurance level 2</b>. Signing keys are made and kept in the Titan M2 security chip,
+          and Android Key Attestation proves that to Google’s certificate authority. Two details connect directly to this course:
+          <ul>
+            <li>
+              <b>One key and certificate per image.</b> Because each photo is signed with a fresh certificate, two photos
+              cannot be linked to each other or to the owner through the signature. That puts chapter 11’s principle into
+              practice: device provenance should not force identity disclosure.
+            </li>
+            <li>
+              <b>An on-device time-stamp authority.</b> The phone keeps a secure clock and time-stamps each signature, even
+              offline, so the credential stays verifiable after the short-lived certificate expires (chapter 6).
+            </li>
+          </ul>
+        </li>
+        <li>
+          <b>Google Photos</b> (Android and iOS) adds a new manifest when you edit a photo that already has credentials, or use
+          its AI editing tools. It also shows credentials in a photo’s details. This is the ingredient chain from chapter 9 in an
+          everyday app.
+        </li>
+        <li>
+          <b>Samsung Galaxy S25 and later (One UI 7):</b> adds Content Credentials to images <em>created or edited with Galaxy
+          AI tools</em>, not to ordinary camera photos. It labels AI involvement rather than proving capture.
+        </li>
+        <li>
+          <b>Xiaomi and vivo:</b> their camera apps are conforming generators at level 1, and their gallery apps are
+          conforming validators that can show credentials.
+        </li>
+        <li>
+          <b>Qualcomm Snapdragon 8 Elite Gen 5:</b> the chip platform itself is listed as a level 2 generator. Phone makers
+          using it still have to switch the feature on.
+        </li>
+        <li>
+          <b>Apple iPhone:</b> as far as we could find, the built-in Camera app does not sign C2PA manifests. iPhone users who
+          need capture provenance use third-party camera apps. Several, such as ProofMode, ProofSnap and InReality Capture,
+          are conforming products at level 1 and use Apple’s App Attest.
+        </li>
+      </ul>
+
+      <h2>Editing, publishing and asset-management software</h2>
+      <p>
+        An editor that receives a signed file should validate it, record what it changed and sign a new manifest with the old
+        one as an ingredient (chapter 9). These tools do some or all of that:
+      </p>
+      <ul>
+        <li>
+          <b>Adobe Photoshop and Lightroom:</b> can attach Content Credentials when you export, recording the edits made and
+          the files used. It is an opt-in setting, so most exported images still have none.
+        </li>
+        <li>
+          <b>Adobe Content Authenticity app:</b> a free web app for adding credentials to finished work in bulk. It can attach
+          verified identity, such as a LinkedIn verified name or linked social accounts, which is the CAWG identity assertion
+          from chapter 12. It can also record a preference about generative-AI training, the CAWG training and data-mining
+          assertion from chapter 13.
+        </li>
+        <li>
+          <b>Photo Mechanic</b> (Camera Bits), the ingest and captioning tool many news photographers use, is a conforming
+          generator, as is the <b>IPTC C2PA Signer Tool</b> for publishers.
+        </li>
+        <li>
+          <b>Snapseed</b> and <b>Google Photos</b> sign the edits they make.
+        </li>
+        <li>
+          <b>Digital asset management and image delivery:</b> Adobe Experience Manager Assets and Cloudinary are conforming
+          generators. Fotoware and Sitecore are listed as conforming validators, so they can check credentials as files
+          come in.
+        </li>
+      </ul>
+
+      <h2>AI generators</h2>
+      <p>
+        By volume, this is where most Content Credentials come from today. Generative tools use the
+        <code>c2pa.actions</code> assertion from chapter 7, with a <code>digitalSourceType</code> of
+        <code>trainedAlgorithmicMedia</code>, to say “an AI made this.” Conforming generators include:
+      </p>
+      <ul>
+        <li><b>OpenAI</b> (“OpenAI Media Service”): images from ChatGPT and the image API, and Sora video.</li>
+        <li><b>Google:</b> many services, including Flow, Pixel Studio, NotebookLM, YouTube Create and the Music AI Sandbox. Google also adds its invisible SynthID watermark, a form of soft binding (chapter 9).</li>
+        <li><b>Amazon Bedrock</b>, <b>Runway</b>, <b>Luma AI</b>, <b>Stability AI</b>, <b>HeyGen</b>, and the generative tools of <b>Getty Images</b> and <b>iStock</b>.</li>
+      </ul>
+      <p>
+        Adobe Firefly and Microsoft’s image tools (Designer, Bing Image Creator, Azure OpenAI) have attached credentials to
+        AI output since 2023–2024, although they were not on the conforming list we checked.
+      </p>
+      <div class="callout key">
+        <div class="callout-title">A label is only as good as its survival</div>
+        <p>
+          An AI generator that honestly labels its output protects nobody once someone strips the metadata, which takes one
+          click. That is why generators increasingly pair the manifest with an invisible watermark, so the label can be
+          recovered after stripping (soft binding, chapter 9).
+        </p>
+      </div>
+
+      <h2>Social platforms and content delivery</h2>
+      <p>Platforms decide whether credentials reach viewers. They can <b>read</b> them, <b>show</b> them, <b>keep</b> them in the file they serve, or (most often) <b>strip</b> them.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Platform</th><th>What it does with credentials</th></tr></thead>
+          <tbody>
+            <tr><td><b>LinkedIn</b></td><td>Shows a “Cr” icon on images that arrive with credentials. Clicking it shows the source and edit history.</td></tr>
+            <tr><td><b>YouTube</b></td><td>Reads credentials at upload. Video shot on a supporting camera, with an intact history, can get a “Captured with a camera” label. The streams viewers watch are re-encoded.</td></tr>
+            <tr><td><b>TikTok</b></td><td>Reads credentials to label AI-generated uploads automatically, alongside creators’ own labels and watermark detection.</td></tr>
+            <tr><td><b>Meta</b> (Facebook, Instagram, Threads)</td><td>Uses C2PA and IPTC signals to apply an “AI info” label, but does not show the full manifest.</td></tr>
+            <tr><td><b>Google Search</b></td><td>“About this image” reports when credentials say an image was made or edited with AI.</td></tr>
+            <tr><td><b>Cloudflare Images</b></td><td>A “Preserve Content Credentials” setting keeps existing manifests and adds a newly signed one describing each resize or format change. It is a working example of the ingredient chain in a CDN.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Most platforms still re-encode uploads and drop the manifest from the file viewers receive, even when they read it on
+        the way in. If you download an image from social media and check it in a validator, the most likely result is still “no
+        Content Credentials found”.
+      </p>
+
+      <h2>Newsrooms</h2>
+      <p>
+        News organisations were early users, because a trusted photo is their product. Public broadcasters such as
+        <b>CBC/Radio-Canada</b> and Ukraine’s <b>Suspilne</b> run conforming signing platforms for what they publish. Others,
+        such as the BBC and AFP, have published images with credentials and given feedback on the spec. The Sony and Canon
+        newsroom services above exist for these customers.
+      </p>
+
+      <h2>Validators</h2>
+      <ul>
+        <li><b>Adobe Content Authenticity Inspect</b> (verify.contentauthenticity.org) is a conforming validator, and the easiest way to check a file in a browser.</li>
+        <li>The CAI <b>open-source SDKs</b> (Rust, with JavaScript, Python and other bindings) and the <code>c2patool</code> command line are what most products above build on. Chapter 10’s inspector uses the JavaScript SDK.</li>
+        <li>Phone galleries (Google Photos, Samsung Gallery, Xiaomi Gallery, vivo Albums) increasingly show credentials directly.</li>
+      </ul>
+
+      <h2>What real deployments teach</h2>
+
+      <h3>Revocation in the real world: Nikon Z6III</h3>
+      <p>
+        In August 2025 Nikon added C2PA signing to the Z6III. Within weeks, a photographer showed that the camera’s
+        <b>multiple-exposure mode</b> could combine an image that was not captured by the camera with a real shot, and the
+        camera would sign the result as an authentic capture. Nikon suspended its authenticity service and <b>revoked every
+        certificate</b> it had issued to Z6III cameras. As of our snapshot, the service had not returned.
+      </p>
+      <p>This one incident exercises almost every idea from Part II:</p>
+      <ul>
+        <li>
+          <b>A valid signature proves who signed, not that the content is true</b> (chapter 4). The camera’s key genuinely
+          signed a composited image.
+        </li>
+        <li>
+          <b>Revocation is the remedy</b> (chapter 5). Once a signer is known to be untrustworthy, its certificates are
+          revoked.
+        </li>
+        <li>
+          <b>Revocation only works if validators check it.</b> Reporters noted that common validation tools did not check
+          revocation by default, so revoked Z6III signatures could still show as valid. Your validator’s settings matter.
+        </li>
+        <li>
+          <b>Time-stamps decide which side of the line a signature falls on</b> (chapter 6). A trusted time-stamp is what lets
+          a validator tell a signature made before revocation from one made after.
+        </li>
+      </ul>
+
+      <h3>Privacy by design: per-image certificates</h3>
+      <p>
+        Pixel’s choice to sign each photo with its own key answers the worry that a device certificate becomes a tracking
+        identifier. The photo still proves “a genuine Pixel camera captured this,” but not which Pixel. If a photographer
+        <em>wants</em> to be named, that is a separate, deliberate step: a CAWG identity assertion (chapters 11–12).
+      </p>
+
+      <h3>Trust levels vary, and the weakest link sets them</h3>
+      <p>
+        A level 2 camera app and a level 1 web service both produce a valid manifest. A provenance chain that passes through
+        both is only as strong as the weaker step (chapter 9). Validators and platforms are beginning to show assurance levels,
+        and the C2PA trust list makes it possible to tell conforming signers from everyone else.
+      </p>
+
+      <h3>Labelling AI is ahead of proving reality</h3>
+      <p>
+        Most credentials in circulation today say “AI made this,” not “a camera captured this.” Proving capture needs
+        hardware support in cameras and phones, and that is arriving slowly: one phone line signs every photo, a handful of
+        professional cameras do, and the most popular phone does not. Until capture signing is common, a <em>missing</em>
+        credential tells you almost nothing about whether an image is real.
+      </p>
+
+      <h2>How to check the current state yourself</h2>
+      <ul>
+        <li>
+          <a href="https://spec.c2pa.org/conformance-explorer/" rel="noopener">C2PA Conformance Explorer</a>, and the raw
+          <a href="https://github.com/c2pa-org/conformance-public" rel="noopener">conforming products list</a>, which shows product type and assurance level.
+        </li>
+        <li><a href="https://verify.contentauthenticity.org" rel="noopener">Content Authenticity Inspect</a>: drop in a file straight from the device or app you want to test.</li>
+        <li><a href="https://contentauthenticity.org" rel="noopener">Content Authenticity Initiative</a> news and member announcements.</li>
+      </ul>
+
+      <h2>Sources</h2>
+      <ul class="small">
+        <li><a href="https://github.com/c2pa-org/conformance-public/blob/main/conforming-products/conforming-products-list.json" rel="noopener">C2PA conforming products list</a> (checked 22 October 2026)</li>
+        <li><a href="https://blog.google/security/pixel-android-trusted-images-c2pa-content-credentials/" rel="noopener">Google: How Pixel and Android are bringing a new level of trust to your images</a> (September 2025)</li>
+        <li><a href="https://www.newsshooter.com/2026/03/12/sonys-camera-authenticity-solution-now-supports-video/" rel="noopener">Newsshooter: Sony’s Camera Authenticity Solution now supports video</a> (March 2026)</li>
+        <li><a href="https://petapixel.com/2025/07/16/canon-adds-c2pa-content-authenticity-to-the-r1-and-r5-mark-ii" rel="noopener">PetaPixel: Canon adds C2PA to the R1 and R5 Mark II</a> (July 2025)</li>
+        <li><a href="https://petapixel.com/2025/09/22/nikon-cant-fully-solve-the-z6-iiis-c2pa-problems-alone/" rel="noopener">PetaPixel: Nikon can’t fully solve the Z6 III’s C2PA problems alone</a> (September 2025)</li>
+        <li><a href="https://www.techradar.com/phones/samsung-galaxy-phones/samsung-galaxy-s25-phones-get-content-credentials-support-and-i-couldnt-be-happier-for-creators" rel="noopener">TechRadar: Galaxy S25 gets Content Credentials</a> (2025)</li>
+        <li><a href="https://developers.cloudflare.com/images/transform-images/preserve-content-credentials/" rel="noopener">Cloudflare Images: Preserve Content Credentials</a></li>
+      </ul>
+    </main>
+  </body>
+</html>
